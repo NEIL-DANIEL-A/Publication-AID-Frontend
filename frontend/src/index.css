@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base reset & defaults ─────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100;
+    @apply transition-colors duration-300;
+    min-height: 100dvh;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-neutral-300 dark:bg-neutral-700 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-accent-400 dark:bg-accent-500; }
+
+  /* Focus styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent-500 ring-offset-2 ring-offset-transparent;
+  }
+}
+
+/* ── Component layer ───────────────────────────────────────── */
+@layer components {
+
+  /* ── Animated mesh gradient background ── */
+  .bg-mesh {
+    @apply bg-gradient-mesh-light dark:bg-gradient-mesh-dark;
+    background-color: inherit;
+  }
+
+  /* ── Glass card base ─────────────────── */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.70);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.50);
+    @apply shadow-glass rounded-2xl;
+  }
+
+  .dark .glass-card {
+    background: rgba(23, 23, 23, 0.60);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    @apply shadow-glass-dark;
+  }
+
+  /* ── Glass panel (navbar, filter panel) ─ */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.80);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.50);
+  }
+
+  .dark .glass-panel {
+    background: rgba(10, 10, 10, 0.75);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  /* ── Shimmer skeleton ────────────────── */
+  .skeleton {
+    @apply rounded-xl overflow-hidden relative;
+    background: linear-gradient(
+      90deg,
+      rgba(0,0,0,0.04) 25%,
+      rgba(0,0,0,0.08) 50%,
+      rgba(0,0,0,0.04) 75%
+    );
+    background-size: 1000px 100%;
+    @apply animate-shimmer;
+  }
+
+  .dark .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.03) 25%,
+      rgba(255,255,255,0.07) 50%,
+      rgba(255,255,255,0.03) 75%
+    );
+    background-size: 1000px 100%;
+  }
+
+  /* ── Accent button ───────────────────── */
+  .btn-accent {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm;
+    @apply bg-accent-600 text-white;
+    @apply hover:bg-accent-700 active:scale-95;
+    @apply transition-all duration-150;
+    @apply focus-visible:ring-2 focus-visible:ring-accent-400;
+  }
+
+  /* ── Ghost button ────────────────────── */
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-sm;
+    @apply text-neutral-600 dark:text-neutral-400;
+    @apply hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95;
+    @apply transition-all duration-150;
+  }
+
+  /* ── Badge base ──────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  /* ── Input base ──────────────────────── */
+  .input-glass {
+    @apply w-full rounded-xl px-4 py-2.5 text-sm;
+    @apply bg-white/60 dark:bg-neutral-900/60;
+    @apply border border-white/50 dark:border-white/10;
+    @apply backdrop-blur-sm;
+    @apply placeholder-neutral-400 dark:placeholder-neutral-500;
+    @apply text-neutral-900 dark:text-neutral-100;
+    @apply focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent;
+    @apply transition-all duration-200;
+  }
+
+  /* ── Floating label ──────────────────── */
+  .select-glass {
+    @apply input-glass appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 36px;
+  }
+}
+
+/* ── Utility layer ─────────────────────────────────────────── */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  }
+
+  /* Pulsing glow dot */
+  .dot-pulse {
+    @apply inline-block w-2 h-2 rounded-full;
+    animation: dotPulse 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.75); }
+}
+
+/* ── Page transition ───────────────────────────────────────── */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms ease, transform 300ms ease;
+}

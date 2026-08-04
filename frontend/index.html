@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpportunityHub AI — Find Hackathons, Workshops & Competitions</title>
+    <meta name="description" content="Discover hackathons, workshops, conferences, and competitions curated and updated daily by AI. Search, filter, and register in seconds." />
+    <meta name="theme-color" content="#6366f1" />
+    <!-- Open Graph -->
+    <meta property="og:title" content="OpportunityHub AI" />
+    <meta property="og:description" content="Discover hackathons, workshops, conferences, and competitions curated daily by AI." />
+    <meta property="og:type" content="website" />
+    <!-- Preconnect for Google Fonts (loaded via CSS @import) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <!-- Dark mode class pre-set to avoid flash -->
+    <script>
+      (function() {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
