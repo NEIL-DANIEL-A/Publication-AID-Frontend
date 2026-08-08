@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 export function LoginPage() {
   const [identifier, setIdentifier] = useState('');
@@ -106,6 +107,16 @@ export function LoginPage() {
             )}
           </button>
         </form>
+
+        {/* OR divider */}
+        <div className="auth-divider">
+          <span className="auth-divider__line" />
+          <span className="auth-divider__text">or continue with</span>
+          <span className="auth-divider__line" />
+        </div>
+
+        {/* Google sign-in */}
+        <GoogleSignInButton label="Sign in with Google" />
 
         {/* Footer link */}
         <p className="text-center text-xs text-neutral-500 dark:text-neutral-400 mt-6">

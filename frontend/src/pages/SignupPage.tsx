@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 export function SignupPage() {
   const [name, setName] = useState('');
@@ -180,8 +181,22 @@ export function SignupPage() {
           </button>
         </form>
 
+        {/* OR divider */}
+        <div className="auth-divider">
+          <span className="auth-divider__line" />
+          <span className="auth-divider__text">or sign up with</span>
+          <span className="auth-divider__line" />
+        </div>
+
+        {/* Google sign-in — for @rajalakshmi.edu.in only */}
+        <GoogleSignInButton label="Sign up with Google" />
+        <p className="text-center text-xs text-neutral-500 dark:text-neutral-400 -mt-1">
+          Google sign-in is restricted to{' '}
+          <span className="font-medium text-neutral-700 dark:text-neutral-300">@rajalakshmi.edu.in</span>{' '}accounts
+        </p>
+
         {/* Footer link */}
-        <p className="text-center text-xs text-neutral-500 dark:text-neutral-400 mt-5">
+        <p className="text-center text-xs text-neutral-500 dark:text-neutral-400 mt-4">
           Already have an account?{' '}
           <Link to="/login" className="text-accent-600 dark:text-accent-400 font-semibold hover:underline">
             Sign in instead

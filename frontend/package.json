@@ -19,6 +19,7 @@
     "vite": "^8.2.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.0",
     "@tanstack/react-query": "^5.101.4",
     "@tanstack/react-query-devtools": "^5.101.4",
     "axios": "^1.19.0",

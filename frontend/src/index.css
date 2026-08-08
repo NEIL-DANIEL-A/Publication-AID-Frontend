@@ -173,3 +173,109 @@
   transform: translateY(0);
   transition: opacity 300ms ease, transform 300ms ease;
 }
+
+/* ── Google Sign-In Button ─────────────────────────────────── */
+.google-btn {
+  @apply w-full flex items-center justify-center gap-3;
+  @apply px-4 py-2.5 rounded-xl text-sm font-medium;
+  @apply bg-white/80 dark:bg-neutral-800/60;
+  @apply border border-neutral-200/80 dark:border-neutral-700/60;
+  @apply text-neutral-700 dark:text-neutral-200;
+  @apply hover:bg-white dark:hover:bg-neutral-800;
+  @apply hover:border-neutral-300 dark:hover:border-neutral-600;
+  @apply hover:shadow-md;
+  @apply active:scale-[0.98];
+  @apply transition-all duration-150;
+  @apply focus-visible:ring-2 focus-visible:ring-accent-500;
+  @apply disabled:opacity-60 disabled:cursor-not-allowed;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.google-btn__icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.google-btn__spinner {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  animation: spin 0.9s linear infinite;
+}
+
+/* ── Auth OR divider ───────────────────────────────────────── */
+.auth-divider {
+  @apply flex items-center gap-3 my-4;
+}
+
+.auth-divider__line {
+  @apply flex-1 h-px bg-neutral-200 dark:bg-neutral-700;
+}
+
+.auth-divider__text {
+  @apply text-xs font-medium text-neutral-400 dark:text-neutral-500 whitespace-nowrap;
+}
+
+/* ── Auth Callback Page ────────────────────────────────────── */
+.auth-callback-page {
+  @apply min-h-screen flex items-center justify-center px-4;
+  @apply bg-gradient-to-br from-neutral-50 via-indigo-50/30 to-violet-50/20;
+  @apply dark:from-neutral-950 dark:via-indigo-950/20 dark:to-violet-950/10;
+}
+
+.auth-callback-card {
+  @apply flex flex-col items-center gap-5 text-center;
+  @apply w-full max-w-xs p-10 rounded-2xl;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 8px 32px -8px rgba(99, 102, 241, 0.15);
+}
+
+.dark .auth-callback-card {
+  background: rgba(23, 23, 23, 0.70);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.auth-callback-spinner-wrap {
+  @apply flex items-center justify-center;
+}
+
+.auth-callback-spinner {
+  width: 48px;
+  height: 48px;
+  animation: spin 1s linear infinite;
+}
+
+.auth-callback-icon {
+  @apply w-12 h-12 rounded-full flex items-center justify-center;
+}
+
+.auth-callback-icon--success {
+  @apply bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400;
+}
+
+.auth-callback-icon--error {
+  @apply bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400;
+}
+
+.auth-callback-message {
+  @apply text-sm font-medium text-neutral-700 dark:text-neutral-300;
+}
+
+.auth-callback-message--error {
+  @apply text-red-600 dark:text-red-400;
+}
+
+.auth-callback-hint {
+  @apply text-xs text-neutral-500 dark:text-neutral-500 leading-relaxed;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+

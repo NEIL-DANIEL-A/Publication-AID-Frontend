@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { listEvents, getEvent, getTypes } from '../controllers/eventController';
-import { signup, login, me } from '../controllers/authController';
+import { signup, login, googleAuth, me } from '../controllers/authController';
 import { listUsers, updateRole } from '../controllers/adminController';
 import { requireAuth, requireRole } from '../middleware/authMiddleware';
 
@@ -13,6 +13,7 @@ router.get('/health', (_req: Request, res: Response) => {
 
 router.post('/auth/signup', signup);
 router.post('/auth/login', login);
+router.post('/auth/google', googleAuth);
 
 // ── Protected Endpoints (Requires valid JWT) ──────────────────
 router.get('/auth/me', requireAuth, me);

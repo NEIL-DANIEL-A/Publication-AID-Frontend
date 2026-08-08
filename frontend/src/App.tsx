@@ -11,6 +11,7 @@ import { EventDetailPage } from './pages/EventDetailPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { AdminUsersPage } from './pages/AdminUsersPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +33,8 @@ export default function App() {
             {/* Public Auth Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            {/* Google OAuth callback — must be public, user is not yet logged in */}
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
             {/* Protected App Routes */}
             <Route

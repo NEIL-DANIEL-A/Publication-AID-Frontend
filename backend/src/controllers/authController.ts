@@ -2,10 +2,13 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { supabase } from '../services/supabase';
+import { classifyCollegeEmail } from '../utils/classification';
 import {
   checkDuplicates,
   createUser,
   findUserByIdentifier,
+  findOrCreateGoogleUser,
   getUserById,
 } from '../services/userService';
 import type { JwtPayload } from '../types/auth';
@@ -30,6 +33,10 @@ const signupSchema = z.object({
 const loginSchema = z.object({
   identifier: z.string().min(1, 'Email or username is required'),
   password: z.string().min(1, 'Password is required'),
+});
+
+const googleAuthSchema = z.object({
+  supabaseAccessToken: z.string().min(1, 'Supabase access token is required'),
 });
 
 // Helper to sign JWT
@@ -78,6 +85,7 @@ export async function signup(req: Request, res: Response): Promise<void> {
       username: user.username,
       email: user.email,
       role: user.role,
+      user_type: user.user_type,
     });
 
     res.status(201).json({
@@ -110,6 +118,15 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // Check if user is password-less (Google user only)
+    if (!userWithHash.password_hash) {
+      res.status(400).json({
+        success: false,
+        error: 'This account uses Google Sign-In. Please sign in with Google.',
+      });
+      return;
+    }
+
     // Compare bcrypt password
     const match = await bcrypt.compare(password, userWithHash.password_hash);
     if (!match) {
@@ -126,6 +143,7 @@ export async function login(req: Request, res: Response): Promise<void> {
       username: user.username,
       email: user.email,
       role: user.role,
+      user_type: user.user_type,
     });
 
     res.json({
@@ -135,6 +153,69 @@ export async function login(req: Request, res: Response): Promise<void> {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Login failed';
+    res.status(500).json({ success: false, error: message });
+  }
+}
+
+export async function googleAuth(req: Request, res: Response): Promise<void> {
+  const parsed = googleAuthSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      success: false,
+      error: parsed.error.errors.map((e) => e.message).join(', '),
+    });
+    return;
+  }
+
+  const { supabaseAccessToken } = parsed.data;
+
+  try {
+    // 1. Verify token with Supabase Auth API
+    const { data: authData, error: authError } = await supabase.auth.getUser(supabaseAccessToken);
+
+    if (authError || !authData?.user || !authData.user.email) {
+      res.status(401).json({ success: false, error: 'Invalid or expired Google token' });
+      return;
+    }
+
+    const email = authData.user.email;
+    const name = authData.user.user_metadata?.full_name || authData.user.user_metadata?.name || email.split('@')[0];
+
+    // 2. Classify domain and local-part
+    const classification = classifyCollegeEmail(email);
+    if (!classification.isValid || !classification.userType) {
+      res.status(403).json({
+        success: false,
+        error: classification.error || 'Access denied',
+      });
+      return;
+    }
+
+    // 3. Find or create user in custom users table
+    const user = await findOrCreateGoogleUser({
+      name,
+      email,
+      userType: classification.userType,
+      department: classification.department ?? null,
+      batchYear: classification.batchYear ?? null,
+    });
+
+    // 4. Issue custom app JWT
+    const token = generateToken({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      user_type: user.user_type,
+    });
+
+    res.json({
+      success: true,
+      token,
+      user,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Google authentication failed';
     res.status(500).json({ success: false, error: message });
   }
 }

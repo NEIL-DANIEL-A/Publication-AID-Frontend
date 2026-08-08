@@ -61,6 +61,11 @@ export async function signupApi(credentials: SignupCredentials): Promise<AuthRes
   return data;
 }
 
+export async function googleAuthApi(supabaseAccessToken: string): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>('/auth/google', { supabaseAccessToken });
+  return data;
+}
+
 export async function getMeApi(): Promise<{ success: boolean; user: User }> {
   const { data } = await api.get<{ success: boolean; user: User }>('/auth/me');
   return data;

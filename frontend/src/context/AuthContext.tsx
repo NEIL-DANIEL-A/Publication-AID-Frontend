@@ -11,6 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  loginWithToken: (token: string, user: User) => void;
   signup: (credentials: SignupCredentials) => Promise<void>;
   logout: () => void;
 }
@@ -67,6 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(USER_KEY, JSON.stringify(res.user));
   }
 
+  // Used by Google OAuth callback — token + user come from backend already verified
+  function loginWithToken(appToken: string, appUser: User) {
+    setToken(appToken);
+    setUser(appUser);
+    localStorage.setItem(TOKEN_KEY, appToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(appUser));
+  }
+
   async function signup(credentials: SignupCredentials) {
     const res = await signupApi(credentials);
     setToken(res.token);
@@ -90,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAdmin,
         login,
+        loginWithToken,
         signup,
         logout,
       }}
