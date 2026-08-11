@@ -39,11 +39,11 @@ interface TypeTabItem {
 }
 
 const TABS: TypeTabItem[] = [
-  { id: '', label: 'All Opportunities', icon: <GridIcon /> },
-  { id: 'Hackathon', label: 'Hackathons', icon: <TrophyIcon /> },
-  { id: 'Workshop', label: 'Workshops', icon: <BookIcon /> },
-  { id: 'Conference', label: 'Conferences', icon: <MicIcon /> },
-  { id: 'Competition', label: 'Competitions', icon: <MedalIcon /> },
+  { id: '', label: 'All Quartiles', icon: <GridIcon /> },
+  { id: 'Q1', label: 'Q1 Quartile', icon: <TrophyIcon /> },
+  { id: 'Q2', label: 'Q2 Quartile', icon: <BookIcon /> },
+  { id: 'Q3', label: 'Q3 Quartile', icon: <MicIcon /> },
+  { id: 'Q4', label: 'Q4 Quartile', icon: <MedalIcon /> },
 ];
 
 interface TypeTabsProps {

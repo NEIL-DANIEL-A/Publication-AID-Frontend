@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getEvents, getEventById, getEventTypeCounts } from '../services/eventService';
 import type { SortOption } from '../types/event';
 
-const ALLOWED_TYPES = ['Hackathon', 'Workshop', 'Conference', 'Competition'];
+const ALLOWED_TYPES = ['Q1', 'Q2', 'Q3', 'Q4'];
 
 // ── Zod schemas ───────────────────────────────────────────────
 
@@ -16,16 +16,20 @@ const listQuerySchema = z.object({
       if (!v) return true;
       const parts = v.split(',').map((p) => p.trim());
       return parts.every((p) => ALLOWED_TYPES.includes(p));
-    }, { message: 'Invalid event type. Allowed values: Hackathon, Workshop, Conference, Competition' }),
+    }, { message: 'Invalid quartile. Allowed values: Q1, Q2, Q3, Q4' }),
   platform:    z.string().optional(),
-  mode:        z.enum(['Online', 'Offline', 'Hybrid']).optional(),
-  fee:         z.enum(['Free', 'Paid']).optional(),
+  mode:        z.string().optional(),
+  publisher:   z.string().optional(),
+  coverage:    z.string().optional(),
+  fee:         z.string().optional(),
   eligibility: z.string().optional(),
+  min_impact_factor: z.string().optional().transform((v) => (v ? parseFloat(v) : undefined)),
+  min_h_index:       z.string().optional().transform((v) => (v ? parseInt(v, 10) : undefined)),
   upcoming:    z.string().optional().transform((v) => v === 'true'),
   sort:        z
-    .enum(['deadline_asc', 'deadline_desc', 'newest', 'oldest'])
+    .enum(['if_desc', 'if_asc', 'name_asc', 'name_desc', 'deadline_asc', 'deadline_desc', 'newest', 'oldest'])
     .optional()
-    .default('deadline_asc'),
+    .default('if_desc'),
   page:  z.string().optional().transform((v) => Math.max(1, parseInt(v ?? '1', 10))),
   limit: z.string().optional().transform((v) => {
     const n = parseInt(v ?? '12', 10);
@@ -34,7 +38,7 @@ const listQuerySchema = z.object({
 });
 
 const idParamSchema = z.object({
-  id: z.string().uuid({ message: 'Event ID must be a valid UUID' }),
+  id: z.string().min(1, { message: 'Journal ID is required' }),
 });
 
 // ── Controllers ───────────────────────────────────────────────

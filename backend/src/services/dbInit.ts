@@ -3,33 +3,6 @@ import { Client } from 'pg';
 const SCHEMA_SQL = `
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TABLE IF NOT EXISTS events (
-  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  title            TEXT        NOT NULL,
-  organizer        TEXT,
-  type             TEXT        NOT NULL DEFAULT 'Hackathon' CHECK (type IN ('Hackathon', 'Workshop', 'Conference', 'Competition')),
-  hackathon_date   TIMESTAMP WITH TIME ZONE,
-  deadline         TIMESTAMP WITH TIME ZONE,
-  registration_url TEXT,
-  mode             TEXT        CHECK (mode IN ('Online', 'Offline', 'Hybrid')),
-  venue            TEXT,
-  registration_fee TEXT,
-  eligibility      TEXT,
-  min_team_size    INTEGER,
-  max_team_size    INTEGER,
-  platform         TEXT,
-  created_at       TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at       TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-ALTER TABLE events ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'Hackathon';
-
-CREATE INDEX IF NOT EXISTS idx_events_deadline        ON events (deadline);
-CREATE INDEX IF NOT EXISTS idx_events_hackathon_date  ON events (hackathon_date);
-CREATE INDEX IF NOT EXISTS idx_events_platform        ON events (platform);
-CREATE INDEX IF NOT EXISTS idx_events_mode            ON events (mode);
-CREATE INDEX IF NOT EXISTS idx_events_type            ON events (type);
-
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -37,17 +10,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS set_events_updated_at ON events;
-CREATE TRIGGER set_events_updated_at
-  BEFORE UPDATE ON events
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
-ALTER TABLE events ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Allow public read access" ON events;
-CREATE POLICY "Allow public read access" ON events FOR SELECT USING (true);
 
 -- ── Users Table ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (

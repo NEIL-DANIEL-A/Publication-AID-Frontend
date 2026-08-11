@@ -1,29 +1,36 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { useEvents } from '../hooks/useEvents';
 import { useDebounce } from '../hooks/useDebounce';
 import { useUrlState } from '../hooks/useUrlState';
 import { fetchEventTypes } from '../services/api';
-import { DEFAULT_FILTERS, EventType } from '../types/event';
+import { DEFAULT_FILTERS, Event, EventType } from '../types/event';
 import { SearchBar } from '../components/SearchBar';
 import { TypeTabs } from '../components/TypeTabs';
 import { FilterPanel } from '../components/FilterPanel';
-import { SortDropdown } from '../components/SortDropdown';
 import { EventGrid } from '../components/EventGrid';
 import { SkeletonGrid } from '../components/SkeletonCard';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { Pagination } from '../components/Pagination';
+import { JournalDetailModal } from '../components/JournalDetailModal';
 
 const LIMIT = 12;
 
 export function HomePage() {
   const [filters, setFilters] = useUrlState();
   const [searchInput, setSearchInput] = useState(filters.search);
+  const [selectedJournal, setSelectedJournal] = useState<Event | null>(null);
   const debouncedSearch = useDebounce(searchInput, 350);
 
-  const effectiveFilters = { ...filters, search: debouncedSearch };
+  // Synchronize local searchInput whenever URL/FilterPanel filters.search changes
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
+
+  const activeSearch = searchInput === filters.search ? filters.search : debouncedSearch;
+  const effectiveFilters = { ...filters, search: activeSearch };
 
   const { data, isLoading, isFetching, isError, error, refetch } = useEvents(effectiveFilters, LIMIT);
 
@@ -42,8 +49,15 @@ export function HomePage() {
     : undefined;
 
   const hasActiveFilters = !!(
-    filters.type || filters.platform || filters.mode || filters.fee ||
-    filters.eligibility || filters.upcoming || debouncedSearch
+    filters.type ||
+    filters.platform ||
+    filters.mode ||
+    filters.publisher ||
+    filters.fee ||
+    filters.eligibility ||
+    filters.coverage ||
+    (filters.min_impact_factor && filters.min_impact_factor > 0) ||
+    debouncedSearch
   );
 
   function handleSearchChange(val: string) {
@@ -54,6 +68,13 @@ export function HomePage() {
   function clearAllFilters() {
     setSearchInput('');
     setFilters({ ...DEFAULT_FILTERS });
+  }
+
+  function handleViewDetail(id: string) {
+    const found = events.find((e) => e.id === id);
+    if (found) {
+      setSelectedJournal(found);
+    }
   }
 
   const totalResults = data?.total ?? 0;
@@ -71,16 +92,16 @@ export function HomePage() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-400 border border-accent-100 dark:border-accent-800/50 mb-1">
             <span className="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse" />
-            Powered by AI · Updated automatically
+            Supabase Journal Intelligence Database
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight text-balance">
             Find your next{' '}
-            <span className="gradient-text">opportunity</span>
+            <span className="gradient-text">journal</span>
           </h1>
 
           <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto text-balance">
-            Discover hackathons, workshops, conferences, and competitions — curated and updated daily by an AI agent.
+            Discover SCI, Scopus, and SSCI indexed journals with real-time metrics and filtering.
           </p>
 
           {!isLoading && totalResults > 0 && (
@@ -91,7 +112,7 @@ export function HomePage() {
               className="text-xs sm:text-sm text-neutral-400 dark:text-neutral-500 pt-1"
             >
               <span className="font-semibold text-accent-600 dark:text-accent-400">{totalResults.toLocaleString()}</span>{' '}
-              {hasActiveFilters ? 'matching' : ''} events found
+              {hasActiveFilters ? 'matching' : ''} journals found
             </motion.p>
           )}
         </motion.div>
@@ -119,22 +140,13 @@ export function HomePage() {
 
       {/* ── Main content ─────────────────────────────────── */}
       <main className="px-4 sm:px-6 max-w-7xl mx-auto pb-16 space-y-6">
-        {/* Sort + filter row */}
-        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-          <div className="flex-1 min-w-0">
-            <FilterPanel
-              filters={filters}
-              onChange={(partial) => setFilters(partial)}
-              totalResults={totalResults}
-            />
-          </div>
-
-          <div className="sm:pt-2 shrink-0">
-            <SortDropdown
-              value={filters.sort}
-              onChange={(sort) => setFilters({ sort })}
-            />
-          </div>
+        {/* Filter row */}
+        <div className="w-full">
+          <FilterPanel
+            filters={filters}
+            onChange={(partial) => setFilters(partial)}
+            totalResults={totalResults}
+          />
         </div>
 
         {/* Events area */}
@@ -153,7 +165,7 @@ export function HomePage() {
         ) : (
           <>
             <div className={`transition-opacity duration-200 ${isFetching ? 'opacity-80' : 'opacity-100'}`}>
-              <EventGrid events={events} />
+              <EventGrid events={events} onViewDetail={handleViewDetail} />
             </div>
 
             <Pagination
@@ -168,6 +180,12 @@ export function HomePage() {
           </>
         )}
       </main>
+
+      {/* Big View Modal */}
+      <JournalDetailModal
+        journal={selectedJournal}
+        onClose={() => setSelectedJournal(null)}
+      />
     </div>
   );
 }

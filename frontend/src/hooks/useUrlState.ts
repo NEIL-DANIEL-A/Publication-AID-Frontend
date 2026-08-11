@@ -22,8 +22,12 @@ export function useUrlState(): [FilterState, SetFilters] {
       type:        p.get('type')        ?? DEFAULT_FILTERS.type,
       platform:    p.get('platform')    ?? DEFAULT_FILTERS.platform,
       mode:        p.get('mode')        ?? DEFAULT_FILTERS.mode,
+      publisher:   p.get('publisher')   ?? DEFAULT_FILTERS.publisher,
       fee:         p.get('fee')         ?? DEFAULT_FILTERS.fee,
       eligibility: p.get('eligibility') ?? DEFAULT_FILTERS.eligibility,
+      coverage:    p.get('coverage')    ?? DEFAULT_FILTERS.coverage,
+      min_impact_factor: p.get('min_if') ? parseFloat(p.get('min_if')!) : 0,
+      min_h_index:       p.get('min_h')  ? parseInt(p.get('min_h')!, 10)  : 0,
       upcoming:    p.get('upcoming')    === 'true',
       sort:        (p.get('sort') as SortOption) ?? DEFAULT_FILTERS.sort,
       page:        parseInt(p.get('page') ?? '1', 10),
@@ -43,8 +47,12 @@ export function useUrlState(): [FilterState, SetFilters] {
       if (next.type)        p.set('type',        next.type);
       if (next.platform)    p.set('platform',    next.platform);
       if (next.mode)        p.set('mode',        next.mode);
+      if (next.publisher)   p.set('publisher',   next.publisher);
       if (next.fee)         p.set('fee',         next.fee);
       if (next.eligibility) p.set('eligibility', next.eligibility);
+      if (next.coverage)    p.set('coverage',    next.coverage);
+      if (next.min_impact_factor && next.min_impact_factor > 0) p.set('min_if', String(next.min_impact_factor));
+      if (next.min_h_index && next.min_h_index > 0)             p.set('min_h',  String(next.min_h_index));
       if (next.upcoming)    p.set('upcoming',    'true');
       if (next.sort && next.sort !== DEFAULT_FILTERS.sort) p.set('sort', next.sort);
       if (next.page > 1)    p.set('page',        String(next.page));

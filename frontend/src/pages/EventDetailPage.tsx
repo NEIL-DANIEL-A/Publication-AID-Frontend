@@ -2,12 +2,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useEvent } from '../hooks/useEvents';
 import { Badge, getModeVariant, getFeeVariant } from '../components/Badge';
-import { CountdownPill } from '../components/CountdownPill';
 import { SkeletonCard } from '../components/SkeletonCard';
 
 function formatDate(d: string | null) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-IN', {
+  const dateObj = new Date(d);
+  if (isNaN(dateObj.getTime())) return d; // Return years range as is
+  return dateObj.toLocaleDateString('en-IN', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 }
@@ -61,35 +62,33 @@ export function EventDetailPage() {
               </h1>
               {event.organizer && (
                 <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-                  Organized by <span className="font-medium text-neutral-700 dark:text-neutral-300">{event.organizer}</span>
+                  Publisher: <span className="font-medium text-neutral-700 dark:text-neutral-300">{event.organizer}</span>
                 </p>
               )}
             </div>
 
             <div className="border-t border-neutral-100 dark:border-neutral-800" />
 
-            {/* Countdown */}
+            {/* Quartile info */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-neutral-500">Time remaining:</span>
-              <CountdownPill deadline={event.deadline} />
+              <span className="text-sm text-neutral-500">Quartile:</span>
+              <span className="badge bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 text-xs font-semibold">
+                {event.type}
+              </span>
             </div>
 
             {/* Detail grid */}
             <dl className="grid sm:grid-cols-2 gap-5 text-sm">
               {[
-                { label: 'Event Date', value: formatDate(event.hackathon_date) },
-                { label: 'Registration Deadline', value: formatDate(event.deadline) },
-                { label: 'Eligibility', value: event.eligibility },
-                { label: 'Registration Fee', value: event.registration_fee },
-                {
-                  label: 'Team Size',
-                  value: event.min_team_size || event.max_team_size
-                    ? `${event.min_team_size ?? '?'} – ${event.max_team_size ?? '?'} members`
-                    : null,
-                },
-                ...(event.mode !== 'Online' && event.venue
-                  ? [{ label: 'Venue', value: event.venue }]
-                  : []),
+                { label: 'Coverage', value: formatDate(event.hackathon_date) },
+                { label: 'CiteScore Year', value: formatDate(event.deadline) },
+                { label: 'Subject Area', value: event.eligibility },
+                { label: 'APC Details', value: event.registration_fee },
+                { label: 'Impact Factor', value: event.min_team_size ? String(event.min_team_size) : null },
+                { label: 'SJR 2025', value: event.venue },
+                { label: 'ISSN', value: event.issn },
+                { label: 'E-ISSN', value: event.e_issn },
+                { label: 'H-Index', value: event.h_index },
               ]
                 .filter((item) => item.value)
                 .map(({ label, value }) => (
@@ -102,7 +101,7 @@ export function EventDetailPage() {
 
             <div className="border-t border-neutral-100 dark:border-neutral-800" />
 
-            {/* Register CTA */}
+            {/* Search CTA */}
             {event.registration_url ? (
               <a
                 href={event.registration_url}
@@ -110,13 +109,13 @@ export function EventDetailPage() {
                 rel="noopener noreferrer"
                 className="btn-accent w-full justify-center text-base py-3"
               >
-                Register Now
+                Search Journal
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
             ) : (
-              <p className="text-sm text-neutral-400 text-center">No registration URL available.</p>
+              <p className="text-sm text-neutral-400 text-center">No search URL available.</p>
             )}
           </motion.div>
         )}

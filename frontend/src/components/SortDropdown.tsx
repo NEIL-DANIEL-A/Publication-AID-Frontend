@@ -2,10 +2,10 @@ import { useId } from 'react';
 import type { SortOption } from '../types/event';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'deadline_asc',  label: '⏰ Deadline (Soonest first)' },
-  { value: 'deadline_desc', label: '📅 Deadline (Latest first)'  },
-  { value: 'newest',        label: '✨ Newest added'             },
-  { value: 'oldest',        label: '🕰️ Oldest added'            },
+  { value: 'if_desc',  label: '⭐ Impact Factor (High to Low)' },
+  { value: 'if_asc',   label: '📈 Impact Factor (Low to High)'  },
+  { value: 'name_asc',  label: '🔤 Journal Name (A to Z)'       },
+  { value: 'name_desc', label: '🔤 Journal Name (Z to A)'       },
 ];
 
 interface SortDropdownProps {

@@ -79,8 +79,12 @@ export async function fetchEvents(filters: Partial<FilterState> & { limit?: numb
   if (filters.type)        params.type        = filters.type;
   if (filters.platform)    params.platform    = filters.platform;
   if (filters.mode)        params.mode        = filters.mode;
+  if (filters.publisher)   params.publisher   = filters.publisher;
   if (filters.fee)         params.fee         = filters.fee;
   if (filters.eligibility) params.eligibility = filters.eligibility;
+  if (filters.coverage)    params.coverage    = filters.coverage;
+  if (filters.min_impact_factor) params.min_impact_factor = filters.min_impact_factor;
+  if (filters.min_h_index)       params.min_h_index       = filters.min_h_index;
   if (filters.upcoming)    params.upcoming    = true;
   if (filters.sort)        params.sort        = filters.sort;
   if (filters.page)        params.page        = filters.page;
