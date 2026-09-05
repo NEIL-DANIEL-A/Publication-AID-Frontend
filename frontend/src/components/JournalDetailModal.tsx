@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Event } from '../types/event';
-import { Badge, getModeVariant, getFeeVariant, getTypeVariant, getTypeIcon } from './Badge';
+import type { JournalWithRelations, JournalChange } from '../types/journal';
+import { useJournalChanges } from '../hooks/useEvents';
+import { Badge } from './Badge';
 
 interface JournalDetailModalProps {
   journal: Event | null;
@@ -25,7 +27,13 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
 
   if (!journal) return null;
 
-  const searchUrl = journal.registration_url || `https://www.google.com/search?q=${encodeURIComponent(journal.title)}`;
+  const j = journal._journal as JournalWithRelations | undefined;
+  const scopus = j?.scopus_results;
+  const mjl = j?.mjl_results;
+  const scimago = j?.scimago_results;
+  const cfr = j?.cfr_results;
+
+  const searchUrl = scimago?.url || `https://www.google.com/search?q=${encodeURIComponent(journal.title)}`;
 
   return (
     <AnimatePresence>
@@ -46,7 +54,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 16 }}
           transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-          className="relative w-full max-w-2xl bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-200/80 dark:border-neutral-800 p-6 sm:p-8 z-10 space-y-6 max-h-[90vh] overflow-y-auto"
+          className="relative w-full max-w-2xl bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-neutral-200/80 dark:border-neutral-800 p-6 sm:p-8 z-10 space-y-5 max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
@@ -63,113 +71,104 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
           {/* Header */}
           <div className="space-y-3 pr-8">
             <div className="flex flex-wrap items-center gap-2">
-              {journal.type && (
-                <Badge variant={getTypeVariant(journal.type)} icon={getTypeIcon(journal.type)}>
-                  Quartile {journal.type}
+              {journal.quartile && (
+                <Badge variant="neutral">
+                  {journal.quartile}
                 </Badge>
               )}
               {journal.platform && <Badge variant="platform">{journal.platform}</Badge>}
-              {journal.mode && <Badge variant={getModeVariant(journal.mode)}>{journal.mode}</Badge>}
-              {journal.registration_fee && (
-                <Badge variant={getFeeVariant(journal.registration_fee)}>{journal.registration_fee}</Badge>
-              )}
             </div>
 
             <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight leading-snug">
               {journal.title}
             </h2>
 
-            {journal.organizer && (
+            {(journal.organizer || cfr?.publisher) && (
               <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400 flex items-center gap-1.5">
                 <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
-                Publisher: <span className="text-neutral-900 dark:text-neutral-200 font-semibold">{journal.organizer}</span>
+                Publisher: <span className="text-neutral-900 dark:text-neutral-200 font-semibold">{journal.organizer || cfr?.publisher}</span>
               </p>
             )}
           </div>
 
           <div className="border-t border-neutral-100 dark:border-neutral-800" />
 
-          {/* Key Metrics Grid */}
+          {/* Key Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {/* Impact Factor */}
-            <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 text-center space-y-1">
-              <span className="block text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                Impact Factor
-              </span>
-              <span className="block text-xl font-bold text-accent-600 dark:text-accent-400">
-                {journal.min_team_size ?? 'N/A'}
-              </span>
-            </div>
+            <MetricBox label="SJR 2025" value={scimago?.sjr ?? journal.sjr_2025 ?? 'N/A'} />
+            <MetricBox label="H-Index" value={scimago?.h_index ?? journal.h_index ?? 'N/A'} />
+            <MetricBox label="Quartile" value={scimago?.quartile ?? journal.quartile ?? 'N/A'} />
+            <MetricBox label="Coverage" value={scimago?.coverage ?? journal.coverage ?? 'N/A'} />
+          </div>
 
-            {/* CiteScore Year */}
-            <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 text-center space-y-1">
-              <span className="block text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                CiteScore Year
-              </span>
-              <span className="block text-base font-semibold text-neutral-800 dark:text-neutral-200 truncate">
-                {journal.deadline ?? 'N/A'}
-              </span>
-            </div>
+          {/* Source Breakdown */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+              Source Verification Breakdown
+            </h3>
 
-            {/* SJR 2025 */}
-            <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 text-center space-y-1">
-              <span className="block text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                SJR 2025
-              </span>
-              <span className="block text-base font-semibold text-neutral-800 dark:text-neutral-200 truncate">
-                {journal.sjr_2025 || journal.venue || 'N/A'}
-              </span>
-            </div>
+            <div className="rounded-xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden text-xs">
+              <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                {/* ISSN */}
+                <DetailRow
+                  label="ISSN / E-ISSN"
+                  value={`${journal.issn || 'N/A'}${journal.e_issn ? ` / ${journal.e_issn}` : ''}`}
+                  mono
+                />
 
-            {/* H-Index */}
-            <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 text-center space-y-1">
-              <span className="block text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-                H-Index
-              </span>
-              <span className="block text-base font-semibold text-neutral-800 dark:text-neutral-200 truncate">
-                {journal.h_index ?? 'N/A'}
-              </span>
+                {/* Scopus */}
+                <DetailRow
+                  label="Scopus Status"
+                  value={scopus?.scopus_status ?? 'Not checked'}
+                  highlight={scopus?.scopus_status?.includes('Active') ?? false}
+                />
+                <DetailRow
+                  label="Scopus Source Title"
+                  value={scopus?.source_title ?? '—'}
+                />
+                <DetailRow
+                  label="Scopus Coverage"
+                  value={scopus?.scopus_coverage ?? '—'}
+                />
+
+                {/* MJL */}
+                <DetailRow
+                  label="MJL Index"
+                  value={mjl?.mjl_index ?? 'Not checked'}
+                  highlight={!!mjl?.mjl_index}
+                />
+                <DetailRow
+                  label="MJL Status"
+                  value={mjl?.mjl_status ?? '—'}
+                />
+
+                {/* SCImago */}
+                <DetailRow
+                  label="SCImago SJR"
+                  value={scimago?.sjr ?? '—'}
+                />
+                <DetailRow
+                  label="SCImago H-Index"
+                  value={scimago?.h_index ?? '—'}
+                />
+                <DetailRow
+                  label="SCImago Coverage"
+                  value={scimago?.coverage ?? '—'}
+                />
+
+                {/* CFR */}
+                <DetailRow
+                  label="CFR Country"
+                  value={cfr?.country ?? '—'}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Details Table */}
-          <div className="rounded-xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden text-xs">
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-              {/* Subject Area */}
-              <div className="p-3 bg-neutral-50/50 dark:bg-neutral-800/30 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <span className="font-semibold text-neutral-500 dark:text-neutral-400">Subject Area / Scope</span>
-                <span className="font-medium text-neutral-800 dark:text-neutral-200 sm:text-right">
-                  {journal.eligibility || 'Multidisciplinary'}
-                </span>
-              </div>
-
-              {/* Coverage */}
-              <div className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <span className="font-semibold text-neutral-500 dark:text-neutral-400">Coverage Years</span>
-                <span className="font-medium text-neutral-800 dark:text-neutral-200">
-                  {journal.coverage || journal.hackathon_date || 'N/A'}
-                </span>
-              </div>
-
-              {/* ISSN / E-ISSN */}
-              <div className="p-3 bg-neutral-50/50 dark:bg-neutral-800/30 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <span className="font-semibold text-neutral-500 dark:text-neutral-400">ISSN / E-ISSN</span>
-                <span className="font-mono text-neutral-800 dark:text-neutral-200">
-                  {journal.issn || 'N/A'} {journal.e_issn ? `/ ${journal.e_issn}` : ''}
-                </span>
-              </div>
-
-              {/* APC / Fee */}
-              <div className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                <span className="font-semibold text-neutral-500 dark:text-neutral-400">APC Fee Details</span>
-                <span className="font-medium text-neutral-800 dark:text-neutral-200">
-                  {journal.registration_fee || 'Subscription / Standard APC'}
-                </span>
-              </div>
-            </div>
-          </div>
+          {/* Changes Timeline */}
+          {j && <ChangesTimeline journalId={j.id} />}
 
           {/* Action buttons */}
           <div className="flex items-center gap-3 pt-2">
@@ -179,7 +178,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
               rel="noopener noreferrer"
               className="btn-accent flex-1 justify-center py-2.5 text-sm font-semibold shadow-sm"
             >
-              Search Journal Web Page
+              {scimago?.url ? 'View on SCImago' : 'Search Journal'}
             </a>
 
             <button
@@ -194,3 +193,82 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
     </AnimatePresence>
   );
 };
+
+function MetricBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 text-center space-y-1">
+      <span className="block text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+        {label}
+      </span>
+      <span className="block text-base font-bold text-accent-600 dark:text-accent-400 truncate">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  mono = false,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+      <span className="font-semibold text-neutral-500 dark:text-neutral-400">{label}</span>
+      <span className={`font-medium sm:text-right ${
+        highlight ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-neutral-800 dark:text-neutral-200'
+      } ${mono ? 'font-mono' : ''}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ChangesTimeline({ journalId }: { journalId: string }) {
+  const { data: changes, isLoading } = useJournalChanges(journalId);
+
+  if (isLoading || !changes || changes.length === 0) return null;
+
+  const grouped: Record<string, JournalChange[]> = {};
+  changes.forEach((c) => {
+    const key = c.source ?? 'unknown';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(c);
+  });
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+        Change History ({changes.length} changes)
+      </h3>
+      <div className="rounded-xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden text-xs max-h-48 overflow-y-auto">
+        <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+          {changes.slice(0, 20).map((change) => (
+            <div key={change.id} className="p-2.5 flex items-start gap-2">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 shrink-0 uppercase">
+                {change.source}
+              </span>
+              <div className="min-w-0 flex-1">
+                <span className="font-medium text-neutral-700 dark:text-neutral-300">{change.field_name}</span>
+                <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  <span className="line-through text-red-400 dark:text-red-500">{change.old_value ?? '—'}</span>
+                  <span>→</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">{change.new_value ?? '—'}</span>
+                </div>
+              </div>
+              <span className="text-[10px] text-neutral-400 dark:text-neutral-500 shrink-0">
+                {new Date(change.changed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

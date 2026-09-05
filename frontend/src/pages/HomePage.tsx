@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from '@tanstack/react-query';
-import { useEvents } from '../hooks/useEvents';
+import { useEvents, usePipelineRun, mapJournalToEvent } from '../hooks/useEvents';
 import { useDebounce } from '../hooks/useDebounce';
 import { useUrlState } from '../hooks/useUrlState';
-import { fetchEventTypes } from '../services/api';
-import { DEFAULT_FILTERS, Event, EventType } from '../types/event';
+import { DEFAULT_FILTERS, Event } from '../types/event';
 import { SearchBar } from '../components/SearchBar';
-import { TypeTabs } from '../components/TypeTabs';
 import { FilterPanel } from '../components/FilterPanel';
 import { EventGrid } from '../components/EventGrid';
 import { SkeletonGrid } from '../components/SkeletonCard';
@@ -15,8 +12,9 @@ import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { Pagination } from '../components/Pagination';
 import { JournalDetailModal } from '../components/JournalDetailModal';
+import { PipelineStatusCard } from '../components/PipelineStatusCard';
 
-const LIMIT = 12;
+const LIMIT = 24;
 
 export function HomePage() {
   const [filters, setFilters] = useUrlState();
@@ -24,40 +22,26 @@ export function HomePage() {
   const [selectedJournal, setSelectedJournal] = useState<Event | null>(null);
   const debouncedSearch = useDebounce(searchInput, 350);
 
-  // Synchronize local searchInput whenever URL/FilterPanel filters.search changes
   useEffect(() => {
     setSearchInput(filters.search);
   }, [filters.search]);
 
   const activeSearch = searchInput === filters.search ? filters.search : debouncedSearch;
-  const effectiveFilters = { ...filters, search: activeSearch };
+  const effectiveFilters = {
+    ...filters,
+    search: activeSearch,
+    quartile: filters.type || undefined,
+    mjl_index: filters.platform || undefined,
+  };
 
   const { data, isLoading, isFetching, isError, error, refetch } = useEvents(effectiveFilters, LIMIT);
-
-  // Fetch type counts for tabs
-  const { data: typeCountsData } = useQuery({
-    queryKey: ['eventTypes'],
-    queryFn: fetchEventTypes,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const typeCountsRecord = typeCountsData?.data
-    ? typeCountsData.data.reduce((acc, curr) => {
-        acc[curr.type] = curr.count;
-        return acc;
-      }, {} as Record<EventType, number>)
-    : undefined;
+  const { data: pipelineRun } = usePipelineRun();
 
   const hasActiveFilters = !!(
     filters.type ||
     filters.platform ||
-    filters.mode ||
-    filters.publisher ||
-    filters.fee ||
-    filters.eligibility ||
-    filters.coverage ||
-    (filters.min_impact_factor && filters.min_impact_factor > 0) ||
-    debouncedSearch
+    filters.search ||
+    filters.publisher
   );
 
   function handleSearchChange(val: string) {
@@ -78,11 +62,11 @@ export function HomePage() {
   }
 
   const totalResults = data?.total ?? 0;
-  const events       = data?.data  ?? [];
+  const events = (data?.data ?? []).map(mapJournalToEvent);
 
   return (
     <div className="min-h-screen bg-mesh">
-      {/* ── Hero ─────────────────────────────────────────── */}
+      {/* Hero */}
       <section className="pt-24 pb-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -92,7 +76,7 @@ export function HomePage() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-400 border border-accent-100 dark:border-accent-800/50 mb-1">
             <span className="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse" />
-            Supabase Journal Intelligence Database
+            Publication-AID Journal Database
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight text-balance">
@@ -117,7 +101,7 @@ export function HomePage() {
           )}
         </motion.div>
 
-        {/* ── Search bar & Type Tabs ─────────────────────── */}
+        {/* Search bar */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -129,17 +113,14 @@ export function HomePage() {
             onChange={handleSearchChange}
             isLoading={isFetching && !isLoading}
           />
-
-          <TypeTabs
-            selectedType={filters.type}
-            onSelectType={(type) => setFilters({ type, page: 1 })}
-            counts={typeCountsRecord}
-          />
         </motion.div>
       </section>
 
-      {/* ── Main content ─────────────────────────────────── */}
+      {/* Main content */}
       <main className="px-4 sm:px-6 max-w-7xl mx-auto pb-16 space-y-6">
+        {/* Pipeline status */}
+        {pipelineRun && <PipelineStatusCard run={pipelineRun} />}
+
         {/* Filter row */}
         <div className="w-full">
           <FilterPanel
@@ -181,7 +162,7 @@ export function HomePage() {
         )}
       </main>
 
-      {/* Big View Modal */}
+      {/* Detail Modal */}
       <JournalDetailModal
         journal={selectedJournal}
         onClose={() => setSelectedJournal(null)}

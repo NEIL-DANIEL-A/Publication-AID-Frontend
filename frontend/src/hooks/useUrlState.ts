@@ -5,16 +5,11 @@ import { DEFAULT_FILTERS } from '../types/event';
 
 type SetFilters = (updater: Partial<FilterState> | ((prev: FilterState) => FilterState)) => void;
 
-/**
- * Reads filter/sort/page state from URL search params and writes back on change.
- * Makes every filter combination shareable and bookmarkable.
- */
 export function useUrlState(): [FilterState, SetFilters] {
   const navigate = useNavigate();
   const location = useLocation();
   const isFirstRender = useRef(true);
 
-  // Parse URL → FilterState
   const parseFromUrl = useCallback((): FilterState => {
     const p = new URLSearchParams(location.search);
     return {
@@ -36,7 +31,6 @@ export function useUrlState(): [FilterState, SetFilters] {
 
   const filters = parseFromUrl();
 
-  // Write FilterState → URL
   const setFilters: SetFilters = useCallback(
     (updater) => {
       const current = parseFromUrl();
@@ -67,12 +61,10 @@ export function useUrlState(): [FilterState, SetFilters] {
     [location.search]
   );
 
-  // Reset page to 1 when filters change (not when page itself changes)
   const setFiltersWithReset: SetFilters = useCallback(
     (updater) => {
       const current = parseFromUrl();
       const partial = typeof updater === 'function' ? updater(current) : updater;
-      // If something other than page changed, reset to page 1
       const pageRelated = 'page' in partial;
       setFilters(pageRelated ? partial : { ...partial, page: 1 });
     },

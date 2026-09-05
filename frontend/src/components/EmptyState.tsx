@@ -19,12 +19,12 @@ export function EmptyState({ hasFilters, onClearFilters }: EmptyStateProps) {
 
       <div className="space-y-1.5 max-w-sm">
         <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200">
-          {hasFilters ? 'No matching events' : 'No events yet'}
+          {hasFilters ? 'No matching journals' : 'No journals found'}
         </h3>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
           {hasFilters
             ? "Try adjusting your filters or search terms to find what you&apos;re looking for."
-            : "Events will appear here once they&apos;re added by the data pipeline."}
+            : "Journals will appear here once the pipeline runs."}
         </p>
       </div>
 

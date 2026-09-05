@@ -1,4 +1,4 @@
-// Event type — mirrors backend/src/types/event.ts exactly
+// Event type — adapted for Publication-AID journal data from Supabase
 
 export type EventType = 'Q1' | 'Q2' | 'Q3' | 'Q4';
 
@@ -6,17 +6,17 @@ export interface Event {
   id: string;
   title: string;
   organizer: string | null;
-  type: EventType;
-  hackathon_date: string | null; // Mapped to coverage
-  deadline: string | null;       // Mapped to citescore_year
+  type: EventType | string;
+  hackathon_date: string | null; // Coverage
+  deadline: string | null;
   registration_url: string | null;
-  mode: string | null;           // Mapped to open_access
-  venue: string | null;          // Mapped to sjr_2025
-  registration_fee: string | null; // Mapped to apc_details
-  eligibility: string | null;    // Mapped to subject_area
-  min_team_size: number | null;  // Mapped to impact_factor
+  mode: string | null;
+  venue: string | null;          // SJR 2025
+  registration_fee: string | null;
+  eligibility: string | null;
+  min_team_size: number | null;
   max_team_size: number | null;
-  platform: string | null;       // Mapped to sci_scopus_ssci
+  platform: string | null;       // SCIE/SSCI/AHCI/ESCI/Scopus
   issn?: string | null;
   e_issn?: string | null;
   h_index?: string | null;
@@ -25,6 +25,7 @@ export interface Event {
   quartile?: string | null;
   created_at: string;
   updated_at: string;
+  _journal?: unknown;
 }
 
 export type SortOption =
@@ -39,12 +40,12 @@ export type SortOption =
 
 export interface FilterState {
   search: string;
-  type: string; // Quartile (Q1, Q2, Q3, Q4)
+  type: string;
   platform: string;
   mode: string;
   publisher: string;
   fee: string;
-  eligibility: string; // Subject area
+  eligibility: string;
   coverage: string;
   min_impact_factor?: number;
   min_h_index?: number;
@@ -65,7 +66,7 @@ export const DEFAULT_FILTERS: FilterState = {
   min_impact_factor: 0,
   min_h_index: 0,
   upcoming: false,
-  sort: 'if_desc',
+  sort: 'name_asc',
   page: 1,
 };
 

@@ -1,0 +1,213 @@
+import { supabaseDb } from '../lib/supabaseDb';
+import type {
+  JournalWithRelations,
+  PipelineRun,
+  JournalChange,
+  SkippedRecord,
+} from '../types/journal';
+
+const PAGE_SIZE = 24;
+
+export interface JournalFilters {
+  search?: string;
+  scopus_status?: string;
+  mjl_index?: string;
+  quartile?: string;
+  publisher?: string;
+  sort?: string;
+  page?: number;
+}
+
+export interface PaginatedJournals {
+  data: JournalWithRelations[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export async function fetchJournals(filters: JournalFilters = {}): Promise<PaginatedJournals> {
+  const page = filters.page ?? 1;
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  const hasScopusFilter = !!filters.scopus_status;
+  const hasMjlFilter = !!filters.mjl_index;
+  const hasScimagoFilter = !!filters.quartile;
+
+  const select = [
+    'cfr_results(*)',
+    hasScopusFilter ? 'scopus_results!inner(*)' : 'scopus_results(*)',
+    hasMjlFilter ? 'mjl_results!inner(*)' : 'mjl_results(*)',
+    hasScimagoFilter ? 'scimago_results!inner(*)' : 'scimago_results(*)',
+  ].join(', ');
+
+  let query = supabaseDb
+    .from('journals')
+    .select(`*, ${select}`, { count: 'exact' });
+
+  if (filters.search) {
+    query = query.or(`title.ilike.%${filters.search}%,print_issn.ilike.%${filters.search}%,e_issn.ilike.%${filters.search}%`);
+  }
+
+  if (filters.scopus_status) {
+    const vals = filters.scopus_status.split(',').map((s) => s.trim()).filter(Boolean);
+    if (vals.length === 1) {
+      query = query.eq('scopus_results.scopus_status', vals[0]);
+    } else if (vals.length > 1) {
+      query = query.in('scopus_results.scopus_status', vals);
+    }
+  }
+
+  if (filters.mjl_index) {
+    const vals = filters.mjl_index.split(',').map((s) => s.trim()).filter(Boolean);
+    if (vals.length === 1) {
+      query = query.eq('mjl_results.mjl_index', vals[0]);
+    } else if (vals.length > 1) {
+      query = query.in('mjl_results.mjl_index', vals);
+    }
+  }
+
+  if (filters.quartile) {
+    const vals = filters.quartile.split(',').map((s) => s.trim()).filter(Boolean);
+    if (vals.length === 1) {
+      query = query.eq('scimago_results.quartile', vals[0]);
+    } else if (vals.length > 1) {
+      query = query.in('scimago_results.quartile', vals);
+    }
+  }
+
+  if (filters.publisher) {
+    const pubs = filters.publisher.split(',').map((s) => s.trim()).filter(Boolean);
+    if (pubs.length === 1) {
+      query = query.ilike('publisher', `%${pubs[0]}%`);
+    } else if (pubs.length > 1) {
+      query = query.or(pubs.map((p) => `publisher.ilike.%${p}%`).join(','));
+    }
+  }
+
+  const sortCol = filters.sort === 'title_asc' || filters.sort === 'title_desc' ? 'title' : 'title';
+  const ascending = filters.sort !== 'title_desc';
+  query = query.order(sortCol, { ascending });
+
+  query = query.range(from, to);
+
+  const { data, count, error } = await query;
+
+  if (error) {
+    console.error('[JournalAPI] fetchJournals error:', error);
+    throw new Error(error.message);
+  }
+
+  return {
+    data: (data ?? []) as unknown as JournalWithRelations[],
+    total: count ?? 0,
+    page,
+    limit: PAGE_SIZE,
+  };
+}
+
+export async function fetchJournalById(id: string): Promise<JournalWithRelations | null> {
+  const { data, error } = await supabaseDb
+    .from('journals')
+    .select('*, cfr_results(*), scopus_results(*), mjl_results(*), scimago_results(*)')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('[JournalAPI] fetchJournalById error:', error);
+    return null;
+  }
+
+  return data as JournalWithRelations;
+}
+
+export async function fetchLatestPipelineRun(): Promise<PipelineRun | null> {
+  const { data, error } = await supabaseDb
+    .from('pipeline_runs')
+    .select('*')
+    .order('started_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[JournalAPI] fetchLatestPipelineRun error:', error);
+    return null;
+  }
+
+  return data as PipelineRun | null;
+}
+
+export async function fetchJournalChanges(journalId: string): Promise<JournalChange[]> {
+  const { data, error } = await supabaseDb
+    .from('journal_changes')
+    .select('*')
+    .eq('journal_id', journalId)
+    .order('changed_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    console.error('[JournalAPI] fetchJournalChanges error:', error);
+    return [];
+  }
+
+  return (data ?? []) as JournalChange[];
+}
+
+export async function fetchSkippedRecords(pipelineRunId: string): Promise<SkippedRecord[]> {
+  const { data, error } = await supabaseDb
+    .from('skipped_records')
+    .select('*')
+    .eq('pipeline_run_id', pipelineRunId)
+    .order('skipped_at', { ascending: false });
+
+  if (error) {
+    console.error('[JournalAPI] fetchSkippedRecords error:', error);
+    return [];
+  }
+
+  return (data ?? []) as SkippedRecord[];
+}
+
+export async function fetchJournalCounts(): Promise<{
+  scopusStatuses: Record<string, number>;
+  mjlIndexes: Record<string, number>;
+  quartiles: Record<string, number>;
+}> {
+  const { data: allJournals, error } = await supabaseDb
+    .from('journals')
+    .select('id');
+
+  if (error || !allJournals) {
+    return { scopusStatuses: {}, mjlIndexes: {}, quartiles: {} };
+  }
+
+  const { data: scopusData } = await supabaseDb
+    .from('scopus_results')
+    .select('scopus_status');
+  const { data: mjlData } = await supabaseDb
+    .from('mjl_results')
+    .select('mjl_index');
+  const { data: scimagoData } = await supabaseDb
+    .from('scimago_results')
+    .select('quartile');
+
+  const scopusStatuses: Record<string, number> = {};
+  (scopusData ?? []).forEach((r: { scopus_status: string | null }) => {
+    const s = r.scopus_status ?? 'Unknown';
+    scopusStatuses[s] = (scopusStatuses[s] ?? 0) + 1;
+  });
+
+  const mjlIndexes: Record<string, number> = {};
+  (mjlData ?? []).forEach((r: { mjl_index: string | null }) => {
+    const idx = r.mjl_index ?? 'Unknown';
+    mjlIndexes[idx] = (mjlIndexes[idx] ?? 0) + 1;
+  });
+
+  const quartiles: Record<string, number> = {};
+  (scimagoData ?? []).forEach((r: { quartile: string | null }) => {
+    const q = r.quartile ?? 'Unknown';
+    quartiles[q] = (quartiles[q] ?? 0) + 1;
+  });
+
+  return { scopusStatuses, mjlIndexes, quartiles };
+}

@@ -1,29 +1,20 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useEvent } from '../hooks/useEvents';
-import { Badge, getModeVariant, getFeeVariant } from '../components/Badge';
+import { mapJournalToEvent } from '../hooks/useEvents';
 import { SkeletonCard } from '../components/SkeletonCard';
-
-function formatDate(d: string | null) {
-  if (!d) return '—';
-  const dateObj = new Date(d);
-  if (isNaN(dateObj.getTime())) return d; // Return years range as is
-  return dateObj.toLocaleDateString('en-IN', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
-}
+import type { JournalWithRelations } from '../types/journal';
 
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data, isLoading, isError } = useEvent(id ?? null);
+  const { data: journal, isLoading, isError } = useEvent(id ?? null);
 
-  const event = data?.data;
+  const event = journal ? mapJournalToEvent(journal as JournalWithRelations) : null;
 
   return (
     <div className="min-h-screen bg-mesh pt-24 pb-16 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto">
-        {/* Back button */}
         <button
           onClick={() => navigate(-1)}
           className="btn-ghost mb-6 -ml-1"
@@ -38,7 +29,7 @@ export function EventDetailPage() {
 
         {isError && (
           <div className="glass-card p-8 text-center text-neutral-500">
-            Failed to load event. <button onClick={() => navigate(-1)} className="text-accent-600 underline">Go back</button>
+            Failed to load journal. <button onClick={() => navigate(-1)} className="text-accent-600 underline">Go back</button>
           </div>
         )}
 
@@ -48,14 +39,19 @@ export function EventDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             className="glass-card p-6 sm:p-8 space-y-6"
           >
-            {/* Badges */}
             <div className="flex flex-wrap gap-2">
-              {event.platform && <Badge variant="platform">{event.platform}</Badge>}
-              {event.mode     && <Badge variant={getModeVariant(event.mode)}>{event.mode}</Badge>}
-              {event.registration_fee && <Badge variant={getFeeVariant(event.registration_fee)}>{event.registration_fee}</Badge>}
+              {event.platform && (
+                <span className="badge bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-400">
+                  {event.platform}
+                </span>
+              )}
+              {event.quartile && (
+                <span className="badge bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                  {event.quartile}
+                </span>
+              )}
             </div>
 
-            {/* Title */}
             <div>
               <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 leading-snug">
                 {event.title}
@@ -69,26 +65,14 @@ export function EventDetailPage() {
 
             <div className="border-t border-neutral-100 dark:border-neutral-800" />
 
-            {/* Quartile info */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-neutral-500">Quartile:</span>
-              <span className="badge bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 text-xs font-semibold">
-                {event.type}
-              </span>
-            </div>
-
-            {/* Detail grid */}
             <dl className="grid sm:grid-cols-2 gap-5 text-sm">
               {[
-                { label: 'Coverage', value: formatDate(event.hackathon_date) },
-                { label: 'CiteScore Year', value: formatDate(event.deadline) },
-                { label: 'Subject Area', value: event.eligibility },
-                { label: 'APC Details', value: event.registration_fee },
-                { label: 'Impact Factor', value: event.min_team_size ? String(event.min_team_size) : null },
-                { label: 'SJR 2025', value: event.venue },
+                { label: 'SJR 2025', value: event.sjr_2025 },
+                { label: 'H-Index', value: event.h_index },
+                { label: 'Quartile', value: event.quartile },
+                { label: 'Coverage', value: event.coverage },
                 { label: 'ISSN', value: event.issn },
                 { label: 'E-ISSN', value: event.e_issn },
-                { label: 'H-Index', value: event.h_index },
               ]
                 .filter((item) => item.value)
                 .map(({ label, value }) => (
@@ -101,7 +85,6 @@ export function EventDetailPage() {
 
             <div className="border-t border-neutral-100 dark:border-neutral-800" />
 
-            {/* Search CTA */}
             {event.registration_url ? (
               <a
                 href={event.registration_url}
@@ -109,13 +92,13 @@ export function EventDetailPage() {
                 rel="noopener noreferrer"
                 className="btn-accent w-full justify-center text-base py-3"
               >
-                Search Journal
+                View on SCImago
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </a>
             ) : (
-              <p className="text-sm text-neutral-400 text-center">No search URL available.</p>
+              <p className="text-sm text-neutral-400 text-center">No SCImago URL available.</p>
             )}
           </motion.div>
         )}
