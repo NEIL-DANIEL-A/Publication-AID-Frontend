@@ -14,6 +14,11 @@ export interface JournalFilters {
   mjl_index?: string;
   quartile?: string;
   publisher?: string;
+  country?: string;
+  min_sjr?: number;
+  max_sjr?: number;
+  min_h_index?: number;
+  max_h_index?: number;
   sort?: string;
   page?: number;
 }
@@ -30,13 +35,12 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const hasScopusFilter = !!filters.scopus_status;
   const hasMjlFilter = !!filters.mjl_index;
-  const hasScimagoFilter = !!filters.quartile;
+  const hasScimagoFilter = !!(filters.quartile || filters.min_sjr || filters.max_sjr || filters.min_h_index || filters.max_h_index);
 
   const select = [
     'cfr_results(*)',
-    hasScopusFilter ? 'scopus_results!inner(*)' : 'scopus_results(*)',
+    'scopus_results!inner(*)',
     hasMjlFilter ? 'mjl_results!inner(*)' : 'mjl_results(*)',
     hasScimagoFilter ? 'scimago_results!inner(*)' : 'scimago_results(*)',
   ].join(', ');
@@ -83,6 +87,29 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
     } else if (pubs.length > 1) {
       query = query.or(pubs.map((p) => `publisher.ilike.%${p}%`).join(','));
     }
+  }
+
+  if (filters.country) {
+    const vals = filters.country.split(',').map((s) => s.trim()).filter(Boolean);
+    if (vals.length === 1) {
+      query = query.ilike('country', `%${vals[0]}%`);
+    } else if (vals.length > 1) {
+      query = query.or(vals.map((c) => `country.ilike.%${c}%`).join(','));
+    }
+  }
+
+  if (filters.min_sjr && filters.min_sjr > 0) {
+    query = query.gte('scimago_results.sjr', String(filters.min_sjr));
+  }
+  if (filters.max_sjr && filters.max_sjr > 0) {
+    query = query.lte('scimago_results.sjr', String(filters.max_sjr));
+  }
+
+  if (filters.min_h_index && filters.min_h_index > 0) {
+    query = query.gte('scimago_results.h_index', String(filters.min_h_index));
+  }
+  if (filters.max_h_index && filters.max_h_index > 0) {
+    query = query.lte('scimago_results.h_index', String(filters.max_h_index));
   }
 
   const sortCol = filters.sort === 'title_asc' || filters.sort === 'title_desc' ? 'title' : 'title';
@@ -172,13 +199,15 @@ export async function fetchJournalCounts(): Promise<{
   scopusStatuses: Record<string, number>;
   mjlIndexes: Record<string, number>;
   quartiles: Record<string, number>;
+  countries: string[];
+  publishers: string[];
 }> {
   const { data: allJournals, error } = await supabaseDb
     .from('journals')
     .select('id');
 
   if (error || !allJournals) {
-    return { scopusStatuses: {}, mjlIndexes: {}, quartiles: {} };
+    return { scopusStatuses: {}, mjlIndexes: {}, quartiles: {}, countries: [], publishers: [] };
   }
 
   const { data: scopusData } = await supabaseDb
@@ -190,6 +219,12 @@ export async function fetchJournalCounts(): Promise<{
   const { data: scimagoData } = await supabaseDb
     .from('scimago_results')
     .select('quartile');
+  const { data: countryData } = await supabaseDb
+    .from('journals')
+    .select('country');
+  const { data: publisherData } = await supabaseDb
+    .from('journals')
+    .select('publisher');
 
   const scopusStatuses: Record<string, number> = {};
   (scopusData ?? []).forEach((r: { scopus_status: string | null }) => {
@@ -209,5 +244,17 @@ export async function fetchJournalCounts(): Promise<{
     quartiles[q] = (quartiles[q] ?? 0) + 1;
   });
 
-  return { scopusStatuses, mjlIndexes, quartiles };
+  const countrySet = new Set<string>();
+  (countryData ?? []).forEach((r: { country: string | null }) => {
+    if (r.country) countrySet.add(r.country);
+  });
+  const countries = [...countrySet].sort();
+
+  const publisherSet = new Set<string>();
+  (publisherData ?? []).forEach((r: { publisher: string | null }) => {
+    if (r.publisher) publisherSet.add(r.publisher);
+  });
+  const publishers = [...publisherSet].sort();
+
+  return { scopusStatuses, mjlIndexes, quartiles, countries, publishers };
 }

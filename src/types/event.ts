@@ -44,11 +44,15 @@ export interface FilterState {
   platform: string;
   mode: string;
   publisher: string;
+  country: string;
+  min_sjr: number;
+  max_sjr: number;
+  min_h_index: number;
+  max_h_index: number;
   fee: string;
   eligibility: string;
   coverage: string;
   min_impact_factor?: number;
-  min_h_index?: number;
   upcoming: boolean;
   sort: SortOption;
   page: number;
@@ -60,11 +64,15 @@ export const DEFAULT_FILTERS: FilterState = {
   platform: '',
   mode: '',
   publisher: '',
+  country: '',
+  min_sjr: 0,
+  max_sjr: 0,
+  min_h_index: 0,
+  max_h_index: 0,
   fee: '',
   eligibility: '',
   coverage: '',
   min_impact_factor: 0,
-  min_h_index: 0,
   upcoming: false,
   sort: 'name_asc',
   page: 1,

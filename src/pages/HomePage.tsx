@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { useEvents, usePipelineRun, mapJournalToEvent } from '../hooks/useEvents';
 import { useDebounce } from '../hooks/useDebounce';
 import { useUrlState } from '../hooks/useUrlState';
@@ -32,6 +31,12 @@ export function HomePage() {
     search: activeSearch,
     quartile: filters.type || undefined,
     mjl_index: filters.platform || undefined,
+    country: filters.country || undefined,
+    publisher: filters.publisher || undefined,
+    min_sjr: filters.min_sjr || undefined,
+    max_sjr: filters.max_sjr || undefined,
+    min_h_index: filters.min_h_index || undefined,
+    max_h_index: filters.max_h_index || undefined,
   };
 
   const { data, isLoading, isFetching, isError, error, refetch } = useEvents(effectiveFilters, LIMIT);
@@ -41,7 +46,12 @@ export function HomePage() {
     filters.type ||
     filters.platform ||
     filters.search ||
-    filters.publisher
+    filters.publisher ||
+    filters.country ||
+    filters.min_sjr > 0 ||
+    filters.max_sjr > 0 ||
+    filters.min_h_index > 0 ||
+    filters.max_h_index > 0
   );
 
   function handleSearchChange(val: string) {
@@ -66,58 +76,16 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-mesh">
-      {/* Hero */}
-      <section className="pt-24 pb-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="text-center space-y-3"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-accent-50 text-accent-600 dark:bg-accent-900/30 dark:text-accent-400 border border-accent-100 dark:border-accent-800/50 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse" />
-            Publication-AID Journal Database
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight text-balance">
-            Find your next{' '}
-            <span className="gradient-text">journal</span>
-          </h1>
-
-          <p className="text-sm sm:text-base text-neutral-500 dark:text-neutral-400 max-w-xl mx-auto text-balance">
-            Discover SCI, Scopus, and SSCI indexed journals with real-time metrics and filtering.
-          </p>
-
-          {!isLoading && totalResults > 0 && (
-            <motion.p
-              key={totalResults}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="text-xs sm:text-sm text-neutral-400 dark:text-neutral-500 pt-1"
-            >
-              <span className="font-semibold text-accent-600 dark:text-accent-400">{totalResults.toLocaleString()}</span>{' '}
-              {hasActiveFilters ? 'matching' : ''} journals found
-            </motion.p>
-          )}
-        </motion.div>
-
+      {/* Main content */}
+      <main className="px-4 sm:px-6 max-w-7xl mx-auto pb-16 space-y-6 pt-20">
         {/* Search bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex flex-col items-center gap-4"
-        >
+        <div className="flex justify-center">
           <SearchBar
             value={searchInput}
             onChange={handleSearchChange}
             isLoading={isFetching && !isLoading}
           />
-        </motion.div>
-      </section>
-
-      {/* Main content */}
-      <main className="px-4 sm:px-6 max-w-7xl mx-auto pb-16 space-y-6">
+        </div>
         {/* Pipeline status */}
         {pipelineRun && <PipelineStatusCard run={pipelineRun} />}
 
