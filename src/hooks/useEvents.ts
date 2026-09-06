@@ -7,6 +7,8 @@ import {
   fetchSkippedRecords,
   fetchJournalCounts,
   fetchRecentChanges,
+  fetchAllPipelineRuns,
+  fetchAllChanges,
   type JournalFilters,
 } from '../services/journalApi';
 import type { JournalWithRelations } from '../types/journal';
@@ -80,6 +82,26 @@ export function useRecentChanges(limit = 20) {
     queryFn: () => fetchRecentChanges(limit),
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
+  });
+}
+
+export function useAllPipelineRuns(page: number, limit = 10) {
+  return useQuery({
+    queryKey: ['allPipelineRuns', page, limit],
+    queryFn: () => fetchAllPipelineRuns(page, limit),
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function useAllChanges(page: number, limit = 20) {
+  return useQuery({
+    queryKey: ['allChanges', page, limit],
+    queryFn: () => fetchAllChanges(page, limit),
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    placeholderData: (prev) => prev,
   });
 }
 

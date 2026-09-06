@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useEvents, usePipelineRun, mapJournalToEvent } from '../hooks/useEvents';
+import { useEvents, mapJournalToEvent } from '../hooks/useEvents';
 import { useDebounce } from '../hooks/useDebounce';
 import { useUrlState } from '../hooks/useUrlState';
 import { DEFAULT_FILTERS, Event } from '../types/event';
@@ -11,7 +11,6 @@ import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { Pagination } from '../components/Pagination';
 import { JournalDetailModal } from '../components/JournalDetailModal';
-import { PipelineStatusCard } from '../components/PipelineStatusCard';
 
 const LIMIT = 24;
 
@@ -40,7 +39,6 @@ export function HomePage() {
   };
 
   const { data, isLoading, isFetching, isError, error, refetch } = useEvents(effectiveFilters, LIMIT);
-  const { data: pipelineRun } = usePipelineRun();
 
   const hasActiveFilters = !!(
     filters.type ||
@@ -86,8 +84,6 @@ export function HomePage() {
             isLoading={isFetching && !isLoading}
           />
         </div>
-        {/* Pipeline status */}
-        {pipelineRun && <PipelineStatusCard run={pipelineRun} />}
 
         {/* Filter row */}
         <div className="w-full">

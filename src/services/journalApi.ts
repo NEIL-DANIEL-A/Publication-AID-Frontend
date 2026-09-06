@@ -230,6 +230,53 @@ export async function fetchRecentChanges(limit = 20): Promise<RecentChange[]> {
   }));
 }
 
+export async function fetchAllPipelineRuns(page = 1, limit = 10): Promise<{ data: PipelineRun[]; total: number }> {
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+  const { data, count, error } = await supabaseDb
+    .from('pipeline_runs')
+    .select('*', { count: 'exact' })
+    .order('started_at', { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    console.error('[JournalAPI] fetchAllPipelineRuns error:', error);
+    return { data: [], total: 0 };
+  }
+  return { data: (data ?? []) as PipelineRun[], total: count ?? 0 };
+}
+
+export async function fetchAllChanges(page = 1, limit = 20): Promise<{ data: RecentChange[]; total: number }> {
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+  const { data, count, error } = await supabaseDb
+    .from('journal_changes')
+    .select('*', { count: 'exact' })
+    .neq('field_name', 'data_hash')
+    .order('changed_at', { ascending: false })
+    .range(from, to);
+
+  if (error || !data || data.length === 0) {
+    if (error) console.error('[JournalAPI] fetchAllChanges error:', error);
+    return { data: [], total: 0 };
+  }
+
+  const changes = data as JournalChange[];
+  const ids = [...new Set(changes.map((c) => c.journal_id))];
+  const { data: journals } = await supabaseDb
+    .from('journals')
+    .select('id, title')
+    .in('id', ids);
+
+  const titleMap = new Map<string, string>();
+  (journals ?? []).forEach((j: { id: string; title: string }) => titleMap.set(j.id, j.title));
+
+  return {
+    data: changes.map((c) => ({ ...c, journal_title: titleMap.get(c.journal_id) ?? null })),
+    total: count ?? 0,
+  };
+}
+
 export async function fetchJournalCounts(): Promise<{
   scopusStatuses: Record<string, number>;
   mjlIndexes: Record<string, number>;

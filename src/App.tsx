@@ -5,6 +5,7 @@ import { BackToTop } from './components/BackToTop';
 import { ToastProvider } from './components/ToastProvider';
 import { HomePage } from './pages/HomePage';
 import { EventDetailPage } from './pages/EventDetailPage';
+import { AdminPage } from './pages/AdminPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +25,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/events/:id" element={<EventDetailPage />} />
+          <Route path="/admin" element={<AdminPage />} />
 
           {/* Catch-all */}
           <Route
