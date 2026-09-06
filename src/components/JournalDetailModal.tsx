@@ -1,9 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Event } from '../types/event';
 import type { JournalWithRelations, JournalChange } from '../types/journal';
 import { useJournalChanges } from '../hooks/useEvents';
 import { Badge } from './Badge';
+
+const MJL_FULL_FORM: Record<string, string> = {
+  SCIE: 'Science Citation Index Expanded',
+  SSCI: 'Social Sciences Citation Index',
+  AHCI: 'Arts & Humanities Citation Index',
+  ESCI: 'Emerging Sources Citation Index',
+};
+
+function mjlIndexFull(val: string | null | undefined): string {
+  if (!val) return 'Not checked';
+  return MJL_FULL_FORM[val] ?? val;
+}
 
 interface JournalDetailModalProps {
   journal: Event | null;
@@ -103,72 +115,8 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
             <MetricBox label="Coverage" value={scimago?.coverage ?? journal.coverage ?? 'N/A'} />
           </div>
 
-          {/* Source Breakdown */}
-          <div className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-              Source Verification Breakdown
-            </h3>
-
-            <div className="rounded-xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden text-xs">
-              <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                {/* ISSN */}
-                <DetailRow
-                  label="ISSN / E-ISSN"
-                  value={`${journal.issn || 'N/A'}${journal.e_issn ? ` / ${journal.e_issn}` : ''}`}
-                  mono
-                />
-
-                {/* Scopus */}
-                <DetailRow
-                  label="Scopus Status"
-                  value={scopus?.scopus_status ?? 'Not checked'}
-                  highlight={scopus?.scopus_status?.includes('Active') ?? false}
-                />
-                <DetailRow
-                  label="Scopus Source Title"
-                  value={scopus?.source_title ?? '—'}
-                />
-                <DetailRow
-                  label="Scopus Coverage"
-                  value={scopus?.scopus_coverage ?? '—'}
-                />
-
-                {/* MJL */}
-                <DetailRow
-                  label="MJL Index"
-                  value={mjl?.mjl_index ?? 'Not checked'}
-                  highlight={!!mjl?.mjl_index}
-                />
-                <DetailRow
-                  label="MJL Status"
-                  value={mjl?.mjl_status ?? '—'}
-                />
-
-                {/* SCImago */}
-                <DetailRow
-                  label="SCImago SJR"
-                  value={scimago?.sjr ?? '—'}
-                />
-                <DetailRow
-                  label="SCImago H-Index"
-                  value={scimago?.h_index ?? '—'}
-                />
-                <DetailRow
-                  label="SCImago Coverage"
-                  value={scimago?.coverage ?? '—'}
-                />
-
-                {/* CFR */}
-                <DetailRow
-                  label="CFR Country"
-                  value={cfr?.country ?? '—'}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Changes Timeline */}
-          {j && <ChangesTimeline journalId={j.id} />}
+          {/* Source Breakdown with inline changes */}
+          <DetailRowSection journalId={j?.id} journal={journal} scopus={scopus ?? null} mjl={mjl ?? null} scimago={scimago ?? null} cfr={cfr ?? null} />
 
           {/* Action buttons */}
           <div className="flex items-center gap-3 pt-2">
@@ -194,6 +142,103 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
   );
 };
 
+function DetailRowSection({
+  journalId,
+  journal,
+  scopus,
+  mjl,
+  scimago,
+  cfr,
+}: {
+  journalId: string | undefined;
+  journal: Event;
+  scopus: JournalWithRelations['scopus_results'];
+  mjl: JournalWithRelations['mjl_results'];
+  scimago: JournalWithRelations['scimago_results'];
+  cfr: JournalWithRelations['cfr_results'];
+}) {
+  const { data: changes } = useJournalChanges(journalId ?? null);
+
+  const latestChanges = useMemo(() => {
+    if (!changes) return {};
+    const map: Record<string, JournalChange> = {};
+    changes.forEach((c) => {
+      if (c.field_name === 'data_hash') return;
+      if (!map[c.field_name]) map[c.field_name] = c;
+    });
+    return map;
+  }, [changes]);
+
+  function ChangeIndicator({ fieldName }: { fieldName: string }) {
+    const change = latestChanges[fieldName];
+    if (!change) return null;
+    return (
+      <div className="flex items-center gap-1.5 text-[10px] mt-0.5">
+        <span className="line-through text-red-400 dark:text-red-500">{change.old_value ?? '—'}</span>
+        <span className="text-neutral-400">→</span>
+        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{change.new_value ?? '—'}</span>
+        <span className="text-neutral-300 dark:text-neutral-600">
+          {new Date(change.changed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+        Source Verification Breakdown
+      </h3>
+
+      <div className="rounded-xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden text-xs">
+        <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+          <DetailRow
+            label="ISSN / E-ISSN"
+            value={`${journal.issn || 'N/A'}${journal.e_issn ? ` / ${journal.e_issn}` : ''}`}
+            mono
+          />
+
+          <DetailRow
+            label="Scopus Status"
+            value={scopus?.scopus_status ?? 'Not checked'}
+            highlight={scopus?.scopus_status?.includes('Active') ?? false}
+            change={<ChangeIndicator fieldName="scopus_status" />}
+          />
+
+          <DetailRow
+            label="MJL Index"
+            value={mjlIndexFull(mjl?.mjl_index)}
+            highlight={!!mjl?.mjl_index}
+            change={<ChangeIndicator fieldName="mjl_index" />}
+          />
+
+          <DetailRow
+            label="SCImago SJR"
+            value={scimago?.sjr ?? '—'}
+            change={<ChangeIndicator fieldName="sjr" />}
+          />
+          <DetailRow
+            label="SCImago H-Index"
+            value={scimago?.h_index ?? '—'}
+            change={<ChangeIndicator fieldName="h_index" />}
+          />
+          <DetailRow
+            label="SCImago Coverage"
+            value={scimago?.coverage ?? '—'}
+            change={<ChangeIndicator fieldName="coverage" />}
+          />
+
+          <DetailRow
+            label="Country"
+            value={cfr?.country ?? '—'}
+            change={<ChangeIndicator fieldName="country" />}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MetricBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 text-center space-y-1">
@@ -212,63 +257,25 @@ function DetailRow({
   value,
   mono = false,
   highlight = false,
+  change,
 }: {
   label: string;
   value: string;
   mono?: boolean;
   highlight?: boolean;
+  change?: React.ReactNode;
 }) {
   return (
     <div className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-      <span className="font-semibold text-neutral-500 dark:text-neutral-400">{label}</span>
+      <div>
+        <span className="font-semibold text-neutral-500 dark:text-neutral-400">{label}</span>
+        {change}
+      </div>
       <span className={`font-medium sm:text-right ${
         highlight ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-neutral-800 dark:text-neutral-200'
       } ${mono ? 'font-mono' : ''}`}>
         {value}
       </span>
-    </div>
-  );
-}
-
-function ChangesTimeline({ journalId }: { journalId: string }) {
-  const { data: changes, isLoading } = useJournalChanges(journalId);
-
-  if (isLoading || !changes || changes.length === 0) return null;
-
-  const grouped: Record<string, JournalChange[]> = {};
-  changes.forEach((c) => {
-    const key = c.source ?? 'unknown';
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(c);
-  });
-
-  return (
-    <div className="space-y-2">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-        Change History ({changes.length} changes)
-      </h3>
-      <div className="rounded-xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden text-xs max-h-48 overflow-y-auto">
-        <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-          {changes.slice(0, 20).map((change) => (
-            <div key={change.id} className="p-2.5 flex items-start gap-2">
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 shrink-0 uppercase">
-                {change.source}
-              </span>
-              <div className="min-w-0 flex-1">
-                <span className="font-medium text-neutral-700 dark:text-neutral-300">{change.field_name}</span>
-                <div className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  <span className="line-through text-red-400 dark:text-red-500">{change.old_value ?? '—'}</span>
-                  <span>→</span>
-                  <span className="text-emerald-600 dark:text-emerald-400">{change.new_value ?? '—'}</span>
-                </div>
-              </div>
-              <span className="text-[10px] text-neutral-400 dark:text-neutral-500 shrink-0">
-                {new Date(change.changed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRecentChanges } from '../hooks/useEvents';
 
 function useDarkMode() {
   const [dark, setDark] = useState<boolean>(() => {
@@ -39,16 +40,45 @@ function MoonIcon() {
   );
 }
 
+function BellIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    </svg>
+  );
+}
+
 export function Navbar() {
   const [dark, setDark] = useDarkMode();
   const [scrolled, setScrolled] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const notifRef = useRef<HTMLDivElement>(null);
+  const { data: recentChanges } = useRecentChanges(20);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const hasUpdates = (recentChanges?.length ?? 0) > 0;
+
+  function handleNotifClick(journalId: string, fieldName: string) {
+    setNotifOpen(false);
+    navigate(`/events/${journalId}?highlight=${fieldName}`);
+  }
 
   return (
     <header
@@ -77,6 +107,75 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
+          {/* Notification bell */}
+          <div ref={notifRef} className="relative">
+            <motion.button
+              onClick={() => setNotifOpen((v) => !v)}
+              className="relative w-9 h-9 rounded-xl flex items-center justify-center
+                         text-neutral-500 dark:text-neutral-400
+                         hover:bg-neutral-100 dark:hover:bg-neutral-800
+                         transition-colors duration-150"
+              aria-label="Updates"
+              whileTap={{ scale: 0.9 }}
+            >
+              <BellIcon />
+              {hasUpdates && (
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-neutral-900" />
+              )}
+            </motion.button>
+
+            <AnimatePresence>
+              {notifOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-neutral-900 rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 z-50 overflow-hidden"
+                >
+                  <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-neutral-800 dark:text-neutral-200">Updates</span>
+                    <span className="text-[11px] text-neutral-400">{recentChanges?.length ?? 0} changes</span>
+                  </div>
+
+                  <div className="max-h-96 overflow-y-auto">
+                    {!recentChanges || recentChanges.length === 0 ? (
+                      <div className="p-8 text-center text-sm text-neutral-400 dark:text-neutral-500">
+                        No recent updates
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                        {recentChanges.map((c) => (
+                          <button
+                            key={c.id}
+                            onClick={() => handleNotifClick(c.journal_id, c.field_name)}
+                            className="w-full text-left px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition-colors flex flex-col gap-1"
+                          >
+                            <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate">
+                              {c.journal_title ?? c.journal_id.slice(0, 8)}
+                            </span>
+                            <span className="text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1.5 flex-wrap">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 uppercase">
+                                {c.source}
+                              </span>
+                              <span className="font-medium">{c.field_name}</span>
+                              <span className="line-through text-red-400">{c.old_value ?? '—'}</span>
+                              <span>→</span>
+                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{c.new_value ?? '—'}</span>
+                            </span>
+                            <span className="text-[10px] text-neutral-400">
+                              {new Date(c.changed_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <motion.button
             onClick={() => setDark((d) => !d)}
             className="relative w-9 h-9 rounded-xl flex items-center justify-center

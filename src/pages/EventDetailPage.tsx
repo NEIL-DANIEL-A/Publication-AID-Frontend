@@ -1,16 +1,30 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useEvent } from '../hooks/useEvents';
+import { useEvent, useJournalChanges } from '../hooks/useEvents';
 import { mapJournalToEvent } from '../hooks/useEvents';
 import { SkeletonCard } from '../components/SkeletonCard';
-import type { JournalWithRelations } from '../types/journal';
+import type { JournalWithRelations, JournalChange } from '../types/journal';
 
 export function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const highlightField = searchParams.get('highlight');
   const { data: journal, isLoading, isError } = useEvent(id ?? null);
+  const { data: changes } = useJournalChanges(id ?? null);
 
   const event = journal ? mapJournalToEvent(journal as JournalWithRelations) : null;
+
+  const latestChanges = useMemo(() => {
+    if (!changes) return {} as Record<string, JournalChange>;
+    const map: Record<string, JournalChange> = {};
+    changes.forEach((c) => {
+      if (c.field_name === 'data_hash') return;
+      if (!map[c.field_name]) map[c.field_name] = c;
+    });
+    return map;
+  }, [changes]);
 
   return (
     <div className="min-h-screen bg-mesh pt-24 pb-16 px-4 sm:px-6">
@@ -67,20 +81,37 @@ export function EventDetailPage() {
 
             <dl className="grid sm:grid-cols-2 gap-5 text-sm">
               {[
-                { label: 'SJR 2025', value: event.sjr_2025 },
-                { label: 'H-Index', value: event.h_index },
-                { label: 'Quartile', value: event.quartile },
-                { label: 'Coverage', value: event.coverage },
-                { label: 'ISSN', value: event.issn },
-                { label: 'E-ISSN', value: event.e_issn },
+                { label: 'SJR 2025', value: event.sjr_2025, field: 'sjr' },
+                { label: 'H-Index', value: event.h_index, field: 'h_index' },
+                { label: 'Quartile', value: event.quartile, field: 'quartile' },
+                { label: 'Coverage', value: event.coverage, field: 'coverage' },
+                { label: 'ISSN', value: event.issn, field: 'print_issn' },
+                { label: 'E-ISSN', value: event.e_issn, field: 'e_issn' },
               ]
                 .filter((item) => item.value)
-                .map(({ label, value }) => (
-                  <div key={label} className="flex flex-col gap-0.5">
-                    <dt className="text-[11px] uppercase tracking-wider font-semibold text-neutral-400 dark:text-neutral-500">{label}</dt>
-                    <dd className="text-neutral-800 dark:text-neutral-200 font-medium">{value}</dd>
-                  </div>
-                ))}
+                .map(({ label, value, field }) => {
+                  const change = latestChanges[field];
+                  const isHighlighted = highlightField === field;
+                  return (
+                    <div
+                      key={label}
+                      className={`flex flex-col gap-0.5 rounded-lg p-2 -m-2 transition-colors ${
+                        isHighlighted ? 'bg-amber-50 dark:bg-amber-900/20 ring-1 ring-amber-300 dark:ring-amber-700' : ''
+                      }`}
+                    >
+                      <dt className="text-[11px] uppercase tracking-wider font-semibold text-neutral-400 dark:text-neutral-500">{label}</dt>
+                      <dd className="text-neutral-800 dark:text-neutral-200 font-medium">{value}</dd>
+                      {change && (
+                        <span className="flex items-center gap-1 text-[11px] mt-0.5">
+                          <span className="line-through text-red-400 dark:text-red-500">{change.old_value ?? '—'}</span>
+                          <span className="text-neutral-400">→</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{change.new_value ?? '—'}</span>
+                          <span className="text-neutral-400 ml-1">{new Date(change.changed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
             </dl>
 
             <div className="border-t border-neutral-100 dark:border-neutral-800" />

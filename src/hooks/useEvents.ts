@@ -6,6 +6,7 @@ import {
   fetchJournalChanges,
   fetchSkippedRecords,
   fetchJournalCounts,
+  fetchRecentChanges,
   type JournalFilters,
 } from '../services/journalApi';
 import type { JournalWithRelations } from '../types/journal';
@@ -70,6 +71,15 @@ export function useJournalCounts() {
     queryFn: fetchJournalCounts,
     staleTime: EVENTS_STALE_TIME,
     gcTime: EVENTS_GC_TIME,
+  });
+}
+
+export function useRecentChanges(limit = 20) {
+  return useQuery({
+    queryKey: ['recentChanges', limit],
+    queryFn: () => fetchRecentChanges(limit),
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 }
 

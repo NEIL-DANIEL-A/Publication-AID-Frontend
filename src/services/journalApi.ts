@@ -197,6 +197,39 @@ export async function fetchSkippedRecords(pipelineRunId: string): Promise<Skippe
   return (data ?? []) as SkippedRecord[];
 }
 
+export interface RecentChange extends JournalChange {
+  journal_title: string | null;
+}
+
+export async function fetchRecentChanges(limit = 20): Promise<RecentChange[]> {
+  const { data, error } = await supabaseDb
+    .from('journal_changes')
+    .select('*')
+    .neq('field_name', 'data_hash')
+    .order('changed_at', { ascending: false })
+    .limit(limit);
+
+  if (error || !data || data.length === 0) {
+    if (error) console.error('[JournalAPI] fetchRecentChanges error:', error);
+    return [];
+  }
+
+  const changes = data as JournalChange[];
+  const ids = [...new Set(changes.map((c) => c.journal_id))];
+  const { data: journals } = await supabaseDb
+    .from('journals')
+    .select('id, title')
+    .in('id', ids);
+
+  const titleMap = new Map<string, string>();
+  (journals ?? []).forEach((j: { id: string; title: string }) => titleMap.set(j.id, j.title));
+
+  return changes.map((c) => ({
+    ...c,
+    journal_title: titleMap.get(c.journal_id) ?? null,
+  }));
+}
+
 export async function fetchJournalCounts(): Promise<{
   scopusStatuses: Record<string, number>;
   mjlIndexes: Record<string, number>;
