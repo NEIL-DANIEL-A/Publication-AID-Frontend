@@ -170,7 +170,14 @@ export async function fetchLatestPipelineRun(): Promise<PipelineRun | null> {
     return null;
   }
 
-  return data as PipelineRun | null;
+  if (!data) return null;
+  const run = data as PipelineRun;
+  // Enrich with real skipped count from skipped_records (column duplicate_skipped was removed in new schema)
+  const { count } = await supabaseDb
+    .from('skipped_records')
+    .select('id', { count: 'exact', head: true })
+    .eq('pipeline_run_id', run.id);
+  return { ...run, skipped_count: count ?? run.duplicate_skipped ?? 0 };
 }
 
 export async function fetchJournalChanges(journalId: string): Promise<JournalChange[]> {
@@ -250,7 +257,23 @@ export async function fetchAllPipelineRuns(page = 1, limit = 10): Promise<{ data
     console.error('[JournalAPI] fetchAllPipelineRuns error:', error);
     return { data: [], total: 0 };
   }
-  return { data: (data ?? []) as PipelineRun[], total: count ?? 0 };
+  const runs = (data ?? []) as PipelineRun[];
+  if (runs.length > 0) {
+    const ids = runs.map((r) => r.id);
+    const { data: skipped } = await supabaseDb
+      .from('skipped_records')
+      .select('pipeline_run_id')
+      .in('pipeline_run_id', ids);
+    const counts = new Map<string, number>();
+    (skipped ?? []).forEach((s: { pipeline_run_id: string | null }) => {
+      if (!s.pipeline_run_id) return;
+      counts.set(s.pipeline_run_id, (counts.get(s.pipeline_run_id) ?? 0) + 1);
+    });
+    runs.forEach((r) => {
+      r.skipped_count = counts.get(r.id) ?? r.duplicate_skipped ?? 0;
+    });
+  }
+  return { data: runs, total: count ?? 0 };
 }
 
 export async function fetchAllChanges(page = 1, limit = 20): Promise<{ data: RecentChange[]; total: number }> {

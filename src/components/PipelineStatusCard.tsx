@@ -35,7 +35,7 @@ export function PipelineStatusCard({ run }: PipelineStatusCardProps) {
   const totalUpdated = run.updated_records ?? 0;
   const totalUnchanged = run.unchanged_records ?? 0;
   const totalFailed = run.failed_records ?? 0;
-  const totalSkipped = run.duplicate_skipped ?? 0;
+  const totalSkipped = (run as { skipped_count?: number }).skipped_count ?? run.duplicate_skipped ?? 0;
 
   const statusClass = statusColors[run.status] ?? 'bg-neutral-50 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700';
 

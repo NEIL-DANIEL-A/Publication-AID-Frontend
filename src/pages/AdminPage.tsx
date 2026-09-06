@@ -108,7 +108,7 @@ function PipelineHistoryTab() {
                   <td className="px-4 py-3 text-center font-semibold text-blue-600 dark:text-blue-400">{run.updated_records}</td>
                   <td className="px-4 py-3 text-center text-neutral-600 dark:text-neutral-400">{run.unchanged_records}</td>
                   <td className="px-4 py-3 text-center font-semibold text-red-600 dark:text-red-400">{run.failed_records}</td>
-                  <td className="px-4 py-3 text-center text-amber-600 dark:text-amber-400">{run.duplicate_skipped}</td>
+                  <td className="px-4 py-3 text-center text-amber-600 dark:text-amber-400">{(run as { skipped_count?: number }).skipped_count ?? run.duplicate_skipped ?? 0}</td>
                   <td className="px-4 py-3 text-center text-neutral-500 whitespace-nowrap">
                     {run.duration_seconds != null ? `${Math.floor(run.duration_seconds / 60)}m ${Math.round(run.duration_seconds % 60)}s` : '—'}
                   </td>

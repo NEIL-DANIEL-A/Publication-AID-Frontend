@@ -85,7 +85,8 @@ export interface PipelineRun {
   unchanged_records: number;
   failed_records: number;
   error: string | null;
-  duplicate_skipped: number;
+  duplicate_skipped: number | null;
+  skipped_count?: number;
 }
 
 export interface JournalChange {
