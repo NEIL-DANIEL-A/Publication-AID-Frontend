@@ -86,27 +86,32 @@ export function mapJournalToEvent(journal: JournalWithRelations) {
   const issn = journal.print_issn || cfr?.print_issn || '';
   const eIssn = journal.e_issn || cfr?.e_issn || '';
 
+  function clean(val: string | null | undefined): string | null {
+    if (!val) return null;
+    return val;
+  }
+
   return {
     id: journal.id,
     title: journal.title,
     organizer: journal.publisher || cfr?.publisher || null,
-    type: (scimago?.quartile ?? '') as string,
-    hackathon_date: scimago?.coverage || scopus?.scopus_coverage || null,
+    type: clean(scimago?.quartile) ?? '',
+    hackathon_date: clean(scimago?.coverage) || clean(scopus?.scopus_coverage) || null,
     deadline: null,
-    registration_url: scimago?.url || null,
+    registration_url: clean(scimago?.url) || null,
     mode: null,
-    venue: scimago?.sjr || null,
+    venue: clean(scimago?.sjr) || null,
     registration_fee: null,
     eligibility: null,
     min_team_size: null,
     max_team_size: null,
-    platform: platform || null,
+    platform: clean(platform) || null,
     issn: issn || null,
     e_issn: eIssn || null,
-    h_index: scimago?.h_index || null,
-    sjr_2025: scimago?.sjr || null,
-    coverage: scimago?.coverage || scopus?.scopus_coverage || null,
-    quartile: scimago?.quartile || null,
+    h_index: clean(scimago?.h_index) || null,
+    sjr_2025: clean(scimago?.sjr) || null,
+    coverage: clean(scimago?.coverage) || clean(scopus?.scopus_coverage) || null,
+    quartile: clean(scimago?.quartile) || null,
     created_at: journal.created_at,
     updated_at: journal.updated_at,
     _journal: journal,

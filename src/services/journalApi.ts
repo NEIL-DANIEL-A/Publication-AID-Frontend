@@ -36,13 +36,12 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
   const to = from + PAGE_SIZE - 1;
 
   const hasMjlFilter = !!filters.mjl_index;
-  const hasScimagoFilter = !!(filters.quartile || filters.min_sjr || filters.max_sjr || filters.min_h_index || filters.max_h_index);
 
   const select = [
     'cfr_results(*)',
     'scopus_results!inner(*)',
     hasMjlFilter ? 'mjl_results!inner(*)' : 'mjl_results(*)',
-    hasScimagoFilter ? 'scimago_results!inner(*)' : 'scimago_results(*)',
+    'scimago_results!inner(*)',
   ].join(', ');
 
   let query = supabaseDb
@@ -52,6 +51,9 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
   if (filters.search) {
     query = query.or(`title.ilike.%${filters.search}%,print_issn.ilike.%${filters.search}%,e_issn.ilike.%${filters.search}%`);
   }
+
+  // Exclude journals where pipeline skipped data collection
+  query = query.not('scimago_results.sjr', 'is', null).not('scimago_results.sjr', 'ilike', '%skipped%');
 
   if (filters.scopus_status) {
     const vals = filters.scopus_status.split(',').map((s) => s.trim()).filter(Boolean);
