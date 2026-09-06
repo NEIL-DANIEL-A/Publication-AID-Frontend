@@ -4,7 +4,7 @@ import type { FilterState } from '../types/event';
 import { DEFAULT_FILTERS } from '../types/event';
 import { useJournalCounts } from '../hooks/useEvents';
 
-const MJL_INDEXES = ['SCIE', 'SSCI', 'AHCI', 'ESCI'];
+const MJL_INDEXES = ['SCIE', 'SSCI', 'AHCI', 'ESCI', 'Not MJL Indexed'];
 const QUARTILES = ['Q1', 'Q2', 'Q3', 'Q4'];
 
 interface FilterPanelProps {

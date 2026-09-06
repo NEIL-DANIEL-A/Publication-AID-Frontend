@@ -107,6 +107,26 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
+          <nav className="hidden sm:flex items-center gap-1">
+            {([
+              { to: '/hackathons', label: 'Hackathons' },
+              { to: '/symposiums', label: 'Symposiums' },
+              { to: '/conferences', label: 'Conferences' },
+              { to: '/workshops', label: 'Workshops' },
+            ] as const).map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                  location.pathname.startsWith(item.to)
+                    ? 'bg-accent-600 text-white'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
           <Link
             to="/admin"
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors flex items-center gap-1.5 ${

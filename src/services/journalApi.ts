@@ -35,6 +35,9 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
+  const mjlVals = filters.mjl_index ? filters.mjl_index.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  const hasNotMjl = mjlVals.includes('Not MJL Indexed');
+  const hasRealMjl = mjlVals.some((v) => v !== 'Not MJL Indexed');
   const hasMjlFilter = !!filters.mjl_index;
 
   const select = [
@@ -65,11 +68,15 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
   }
 
   if (filters.mjl_index) {
-    const vals = filters.mjl_index.split(',').map((s) => s.trim()).filter(Boolean);
-    if (vals.length === 1) {
-      query = query.eq('mjl_results.mjl_index', vals[0]);
-    } else if (vals.length > 1) {
-      query = query.in('mjl_results.mjl_index', vals);
+    if (hasNotMjl && hasRealMjl) {
+      const realVals = mjlVals.filter((v) => v !== 'Not MJL Indexed');
+      query = query.or(`mjl_index.in.(${realVals.join(',')}),mjl_index.is.null,mjl_index.eq."no data"`, { foreignTable: 'mjl_results' } as never);
+    } else if (hasNotMjl) {
+      query = query.or('mjl_index.is.null,mjl_index.eq."no data"', { foreignTable: 'mjl_results' } as never);
+    } else if (mjlVals.length === 1) {
+      query = query.eq('mjl_results.mjl_index', mjlVals[0]);
+    } else if (mjlVals.length > 1) {
+      query = query.in('mjl_results.mjl_index', mjlVals);
     }
   }
 

@@ -6,6 +6,8 @@ import { ToastProvider } from './components/ToastProvider';
 import { HomePage } from './pages/HomePage';
 import { EventDetailPage } from './pages/EventDetailPage';
 import { AdminPage } from './pages/AdminPage';
+import { CategoryPage } from './pages/CategoryPage';
+import { CategoryDetailPage } from './pages/CategoryDetailPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,6 +28,14 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/events/:id" element={<EventDetailPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/hackathons" element={<CategoryPage category="hackathon" />} />
+          <Route path="/hackathons/:id" element={<CategoryDetailPage />} />
+          <Route path="/symposiums" element={<CategoryPage category="symposium" />} />
+          <Route path="/symposiums/:id" element={<CategoryDetailPage />} />
+          <Route path="/conferences" element={<CategoryPage category="conference" />} />
+          <Route path="/conferences/:id" element={<CategoryDetailPage />} />
+          <Route path="/workshops" element={<CategoryPage category="workshop" />} />
+          <Route path="/workshops/:id" element={<CategoryDetailPage />} />
 
           {/* Catch-all */}
           <Route
