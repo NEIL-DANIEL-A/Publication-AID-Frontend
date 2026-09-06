@@ -17,7 +17,8 @@
   }
 
   body {
-    @apply font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100;
+    @apply font-sans text-neutral-900 dark:text-neutral-100;
+    @apply bg-[#f8f7ff] dark:bg-neutral-950;
     @apply transition-colors duration-300;
     min-height: 100dvh;
   }
@@ -45,10 +46,10 @@
 
   /* ── Glass card base ─────────────────── */
   .glass-card {
-    background: rgba(255, 255, 255, 0.70);
+    background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.50);
+    border: 1px solid rgba(226, 232, 240, 0.80);
     @apply shadow-glass rounded-2xl;
   }
 
@@ -60,10 +61,11 @@
 
   /* ── Glass panel (navbar, filter panel) ─ */
   .glass-panel {
-    background: rgba(255, 255, 255, 0.80);
+    background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.50);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.80);
+    box-shadow: 0 1px 3px rgba(15,23,42,0.04);
   }
 
   .dark .glass-panel {
@@ -119,12 +121,13 @@
   /* ── Input base ──────────────────────── */
   .input-glass {
     @apply w-full rounded-xl px-4 py-2.5 text-sm;
-    @apply bg-white/60 dark:bg-neutral-900/60;
-    @apply border border-white/50 dark:border-white/10;
+    @apply bg-white dark:bg-neutral-900/60;
+    @apply border border-slate-200 dark:border-white/10;
     @apply backdrop-blur-sm;
     @apply placeholder-neutral-400 dark:placeholder-neutral-500;
     @apply text-neutral-900 dark:text-neutral-100;
     @apply focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent;
+    @apply shadow-sm dark:shadow-none;
     @apply transition-all duration-200;
   }
 

@@ -48,7 +48,7 @@ export default {
       },
       backgroundImage: {
         'gradient-mesh-light':
-          'radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.06) 0%, transparent 50%), radial-gradient(ellipse at 60% 80%, rgba(99,102,241,0.04) 0%, transparent 50%)',
+          'radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.14) 0%, transparent 55%), radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.10) 0%, transparent 55%), radial-gradient(ellipse at 60% 85%, rgba(99,102,241,0.07) 0%, transparent 55%), radial-gradient(ellipse at 90% 90%, rgba(236,72,153,0.05) 0%, transparent 50%)',
         'gradient-mesh-dark':
           'radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.10) 0%, transparent 50%), radial-gradient(ellipse at 60% 80%, rgba(79,70,229,0.08) 0%, transparent 50%)',
       },
@@ -78,10 +78,10 @@ export default {
         },
       },
       boxShadow: {
-        'glass':       '0 4px 24px -1px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.06)',
+        'glass':       '0 4px 24px -1px rgba(15,23,42,0.07), 0 1px 3px rgba(15,23,42,0.06), 0 0 0 1px rgba(15,23,42,0.04)',
         'glass-dark':  '0 4px 24px -1px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.06)',
         'accent-glow': '0 0 20px rgba(99,102,241,0.25)',
-        'card-hover':  '0 20px 60px -10px rgba(0,0,0,0.15)',
+        'card-hover':  '0 12px 32px -8px rgba(15,23,42,0.12), 0 4px 12px rgba(15,23,42,0.05)',
         'card-hover-dark': '0 20px 60px -10px rgba(0,0,0,0.60)',
       },
       backdropBlur: {

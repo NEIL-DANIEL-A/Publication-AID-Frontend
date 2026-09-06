@@ -299,7 +299,7 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
   );
 }
 
-function FilterDropdown({ label, active, badge, isOpen, onToggle, wide, children }: {
+  function FilterDropdown({ label, active, badge, isOpen, onToggle, wide, children }: {
   label: string;
   active: boolean;
   badge?: string;
@@ -315,7 +315,7 @@ function FilterDropdown({ label, active, badge, isOpen, onToggle, wide, children
         className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
           active
             ? 'bg-accent-600 text-white border-accent-600 shadow-sm'
-            : 'bg-neutral-100/80 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
+            : 'bg-white dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:border-slate-300 dark:hover:border-neutral-600 shadow-sm dark:shadow-none'
         }`}
       >
         {label} {badge && <span className="opacity-80">({badge})</span>}

@@ -119,8 +119,8 @@ export function Navbar() {
                 to={item.to}
                 className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                   location.pathname.startsWith(item.to)
-                    ? 'bg-accent-600 text-white'
-                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                    ? 'bg-accent-600 text-white shadow-sm'
+                    : 'text-neutral-700 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'
                 }`}
               >
                 {item.label}
@@ -129,10 +129,10 @@ export function Navbar() {
           </nav>
           <Link
             to="/admin"
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors flex items-center gap-1.5 shadow-sm dark:shadow-none ${
               location.pathname === '/admin'
                 ? 'bg-accent-600 text-white border-accent-600'
-                : 'bg-neutral-100/80 dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
+                : 'bg-white dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:border-slate-300 dark:hover:border-neutral-600 hover:bg-slate-50 dark:hover:bg-neutral-800'
             }`}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

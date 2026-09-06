@@ -241,7 +241,7 @@ function DetailRowSection({
 
 function MetricBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="p-3.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 text-center space-y-1">
+    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-neutral-800/60 border border-slate-200 dark:border-neutral-800 text-center space-y-1">
       <span className="block text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
         {label}
       </span>

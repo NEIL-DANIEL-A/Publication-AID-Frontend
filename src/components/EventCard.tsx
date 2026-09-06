@@ -77,7 +77,7 @@ export function EventCard({ event, onViewDetail }: EventCardProps) {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-neutral-100 dark:border-neutral-800 shrink-0" />
+        <div className="border-t border-slate-200 dark:border-neutral-800 shrink-0" />
 
         {/* Meta grid */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 shrink-0">
@@ -99,7 +99,7 @@ export function EventCard({ event, onViewDetail }: EventCardProps) {
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={(e) => { e.stopPropagation(); onViewDetail?.(event.id); }}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 font-semibold text-xs transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-neutral-700 font-semibold text-xs transition-colors border border-slate-200 dark:border-transparent shadow-sm dark:shadow-none"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
