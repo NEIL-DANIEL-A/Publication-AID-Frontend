@@ -71,13 +71,14 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
   if (filters.mjl_index) {
     if (hasNotMjl && hasRealMjl) {
       const realVals = mjlVals.filter((v) => v !== 'Not MJL Indexed');
-      query = query.or(`mjl_index.in.(${realVals.join(',')}),mjl_index.is.null,mjl_index.eq."no data"`, { foreignTable: 'mjl_results' } as never);
+      const parts = [...realVals.map((v) => `mjl_index.ilike.%${v}%`), 'mjl_index.is.null', 'mjl_index.eq."no data"'];
+      query = query.or(parts.join(','), { foreignTable: 'mjl_results' } as never);
     } else if (hasNotMjl) {
       query = query.or('mjl_index.is.null,mjl_index.eq."no data"', { foreignTable: 'mjl_results' } as never);
     } else if (mjlVals.length === 1) {
-      query = query.eq('mjl_results.mjl_index', mjlVals[0]);
+      query = query.ilike('mjl_results.mjl_index', `%${mjlVals[0]}%`);
     } else if (mjlVals.length > 1) {
-      query = query.in('mjl_results.mjl_index', mjlVals);
+      query = query.or(mjlVals.map((v) => `mjl_index.ilike.%${v}%`).join(','), { foreignTable: 'mjl_results' } as never);
     }
   }
 
@@ -93,9 +94,9 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
   if (filters.publisher) {
     const pubs = filters.publisher.split(',').map((s) => s.trim()).filter(Boolean);
     if (pubs.length === 1) {
-      query = query.ilike('publisher', `%${pubs[0]}%`);
+      query = query.eq('publisher', pubs[0]);
     } else if (pubs.length > 1) {
-      query = query.or(pubs.map((p) => `publisher.ilike.%${p}%`).join(','));
+      query = query.in('publisher', pubs);
     }
   }
 
@@ -308,6 +309,20 @@ export async function fetchAllChanges(page = 1, limit = 20): Promise<{ data: Rec
   };
 }
 
+async function fetchAll<T>(table: string, column: string): Promise<T[]> {
+  const all: T[] = [];
+  let from = 0;
+  const size = 1000;
+  while (true) {
+    const { data, error } = await supabaseDb.from(table).select(column).range(from, from + size - 1);
+    if (error || !data || data.length === 0) break;
+    all.push(...(data as T[]));
+    if (data.length < size) break;
+    from += size;
+  }
+  return all;
+}
+
 export async function fetchJournalCounts(): Promise<{
   scopusStatuses: Record<string, number>;
   mjlIndexes: Record<string, number>;
@@ -315,29 +330,13 @@ export async function fetchJournalCounts(): Promise<{
   countries: string[];
   publishers: string[];
 }> {
-  const { data: allJournals, error } = await supabaseDb
-    .from('journals')
-    .select('id');
-
-  if (error || !allJournals) {
-    return { scopusStatuses: {}, mjlIndexes: {}, quartiles: {}, countries: [], publishers: [] };
-  }
-
-  const { data: scopusData } = await supabaseDb
-    .from('scopus_results')
-    .select('scopus_status');
-  const { data: mjlData } = await supabaseDb
-    .from('mjl_results')
-    .select('mjl_index');
-  const { data: scimagoData } = await supabaseDb
-    .from('scimago_results')
-    .select('quartile');
-  const { data: countryData } = await supabaseDb
-    .from('journals')
-    .select('country');
-  const { data: publisherData } = await supabaseDb
-    .from('journals')
-    .select('publisher');
+  const [scopusData, mjlData, scimagoData, countryData, publisherData] = await Promise.all([
+    fetchAll<{ scopus_status: string | null }>('scopus_results', 'scopus_status'),
+    fetchAll<{ mjl_index: string | null }>('mjl_results', 'mjl_index'),
+    fetchAll<{ quartile: string | null }>('scimago_results', 'quartile'),
+    fetchAll<{ country: string | null }>('journals', 'country'),
+    fetchAll<{ publisher: string | null }>('journals', 'publisher'),
+  ]);
 
   const scopusStatuses: Record<string, number> = {};
   (scopusData ?? []).forEach((r: { scopus_status: string | null }) => {
@@ -357,15 +356,20 @@ export async function fetchJournalCounts(): Promise<{
     quartiles[q] = (quartiles[q] ?? 0) + 1;
   });
 
+  const invalid = new Set(['-', '--', 'no data', 'n/a', 'na', 'none', '']);
   const countrySet = new Set<string>();
   (countryData ?? []).forEach((r: { country: string | null }) => {
-    if (r.country) countrySet.add(r.country);
+    const v = r.country?.trim();
+    if (!v || invalid.has(v.toLowerCase())) return;
+    countrySet.add(v);
   });
   const countries = [...countrySet].sort();
 
   const publisherSet = new Set<string>();
   (publisherData ?? []).forEach((r: { publisher: string | null }) => {
-    if (r.publisher) publisherSet.add(r.publisher);
+    const v = r.publisher?.trim();
+    if (!v || invalid.has(v.toLowerCase())) return;
+    publisherSet.add(v);
   });
   const publishers = [...publisherSet].sort();
 

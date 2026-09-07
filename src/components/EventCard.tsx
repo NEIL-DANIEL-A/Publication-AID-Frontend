@@ -35,7 +35,7 @@ export function EventCard({ event, onViewDetail }: EventCardProps) {
       <div className="flex flex-col gap-3 p-5 flex-1 min-h-0">
         {/* Badges row */}
         <div className="flex items-center gap-1.5 overflow-hidden shrink-0 flex-nowrap" style={{ height: '22px' }}>
-          {event.platform && <Badge variant="platform">{event.platform}</Badge>}
+          {event.platform && event.platform.split(',').map((p) => p.trim()).filter(Boolean).map((plat) => <Badge key={plat} variant="platform">{plat}</Badge>)}
           {event.quartile && (
             <span className={`inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-[11px] font-bold ${
               event.quartile === 'Q1' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/50' :

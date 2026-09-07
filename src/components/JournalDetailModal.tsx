@@ -14,7 +14,7 @@ const MJL_FULL_FORM: Record<string, string> = {
 
 function mjlIndexFull(val: string | null | undefined): string {
   if (!val) return 'Not checked';
-  return MJL_FULL_FORM[val] ?? val;
+  return val.split(',').map((p) => p.trim()).filter(Boolean).map((p) => MJL_FULL_FORM[p] ?? p).join(', ');
 }
 
 interface JournalDetailModalProps {
@@ -89,7 +89,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
                   {journal.quartile}
                 </Badge>
               )}
-              {journal.platform && <Badge variant="platform">{journal.platform}</Badge>}
+              {journal.platform && journal.platform.split(',').map((p) => p.trim()).filter(Boolean).map((plat) => <Badge key={plat} variant="platform">{plat}</Badge>)}
             </div>
 
             <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-50 tracking-tight leading-snug">

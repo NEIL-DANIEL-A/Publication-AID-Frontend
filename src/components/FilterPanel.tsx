@@ -146,8 +146,8 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
         </div>
       </div>
 
-      {/* Filter buttons — single flex row */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Filter buttons — flexed across entire div */}
+      <div className="flex flex-wrap gap-3">
         <FilterDropdown
           label="Quartile"
           active={selectedQuartiles.length > 0}
@@ -332,7 +332,7 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.15 }}
             className={`absolute left-0 mt-2 bg-white dark:bg-neutral-900 rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 p-3 z-50 space-y-2 ${
-              wide ? 'w-56' : 'w-48'
+              wide ? 'w-72' : 'w-56'
             }`}
           >
             {children}
@@ -353,14 +353,14 @@ function DropdownLabel({ children }: { children: React.ReactNode }) {
 
 function CheckboxItem({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
   return (
-    <label className="flex items-center gap-2 text-xs text-neutral-700 dark:text-neutral-300 cursor-pointer select-none py-0.5">
+    <label className="flex items-start gap-2 text-xs text-neutral-700 dark:text-neutral-300 cursor-pointer select-none py-1">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="rounded border-neutral-300 text-accent-600 focus:ring-accent-500"
+        className="mt-0.5 rounded border-neutral-300 text-accent-600 focus:ring-accent-500 shrink-0"
       />
-      <span className="font-semibold">{label}</span>
+      <span className="font-semibold break-words leading-tight">{label}</span>
     </label>
   );
 }
