@@ -25,7 +25,7 @@ export function Pagination({ page, total, limit, onPageChange }: PaginationProps
 
   return (
     <nav
-      className="flex items-center justify-center gap-1.5 mt-8"
+      className="flex items-center justify-center gap-1 sm:gap-1.5 mt-6 sm:mt-8 px-2 overflow-x-auto"
       aria-label="Pagination"
     >
       {/* Prev */}
@@ -48,7 +48,7 @@ export function Pagination({ page, total, limit, onPageChange }: PaginationProps
             key={p}
             onClick={() => onPageChange(p as number)}
             aria-current={p === page ? 'page' : undefined}
-            className={`relative w-9 h-9 rounded-xl text-sm font-medium transition-all duration-150 ${
+            className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-sm font-medium transition-all duration-150 shrink-0 ${
               p === page
                 ? 'text-white'
                 : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'

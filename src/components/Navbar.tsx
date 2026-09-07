@@ -52,6 +52,7 @@ export function Navbar() {
   const [dark, setDark] = useDarkMode();
   const [scrolled, setScrolled] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const notifRef = useRef<HTMLDivElement>(null);
@@ -72,6 +73,9 @@ export function Navbar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Close mobile drawer on route change
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const hasUpdates = (recentChanges?.length ?? 0) > 0;
 
@@ -106,8 +110,8 @@ export function Navbar() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-2">
-          <nav className="hidden sm:flex items-center gap-1">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <nav className="hidden md:flex items-center gap-1">
             {([
               { to: '/hackathons', label: 'Hackathons' },
               { to: '/symposiums', label: 'Symposiums' },
@@ -129,7 +133,7 @@ export function Navbar() {
           </nav>
           <Link
             to="/admin"
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors flex items-center gap-1.5 shadow-sm dark:shadow-none ${
+            className={`hidden sm:flex px-3 py-1.5 rounded-xl text-xs font-semibold border items-center gap-1.5 shadow-sm dark:shadow-none transition-colors ${
               location.pathname === '/admin'
                 ? 'bg-accent-600 text-white border-accent-600'
                 : 'bg-white dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:border-slate-300 dark:hover:border-neutral-600 hover:bg-slate-50 dark:hover:bg-neutral-800'
@@ -141,6 +145,16 @@ export function Navbar() {
             </svg>
             Admin
           </Link>
+          {/* Hamburger - mobile */}
+          <button
+            onClick={() => setMobileOpen((v) => !v)}
+            className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center text-neutral-600 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800"
+            aria-label="Menu"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
+            </svg>
+          </button>
 
           {/* Notification bell */}
           <div ref={notifRef} className="relative">
@@ -243,6 +257,41 @@ export function Navbar() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
         />
       )}
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden border-t border-slate-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md overflow-hidden"
+          >
+            <nav className="px-4 py-3 flex flex-col gap-1">
+              {[
+                { to: '/', label: 'Home' },
+                { to: '/hackathons', label: 'Hackathons' },
+                { to: '/symposiums', label: 'Symposiums' },
+                { to: '/conferences', label: 'Conferences' },
+                { to: '/workshops', label: 'Workshops' },
+                { to: '/admin', label: 'Admin' },
+              ].map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={`px-3 py-2.5 rounded-xl text-sm font-semibold ${
+                    location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(item.to))
+                      ? 'bg-accent-600 text-white'
+                      : 'text-neutral-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-800'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

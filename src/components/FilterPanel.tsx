@@ -147,7 +147,7 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
       </div>
 
       {/* Filter buttons — flexed across entire div */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
         <FilterDropdown
           label="Quartile"
           active={selectedQuartiles.length > 0}
@@ -309,17 +309,17 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative">
+    <div className="relative flex-1 sm:flex-none min-w-[calc(50%-6px)] sm:min-w-0">
       <button
         onClick={onToggle}
-        className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1.5 ${
+        className={`w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center justify-between sm:justify-center gap-1.5 ${
           active
             ? 'bg-accent-600 text-white border-accent-600 shadow-sm'
             : 'bg-white dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:border-slate-300 dark:hover:border-neutral-600 shadow-sm dark:shadow-none'
         }`}
       >
-        {label} {badge && <span className="opacity-80">({badge})</span>}
-        <svg className="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <span className="truncate">{label} {badge && <span className="opacity-80 hidden sm:inline">({badge})</span>}</span>
+        <svg className="w-3.5 h-3.5 opacity-70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -331,9 +331,9 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className={`absolute left-0 mt-2 bg-white dark:bg-neutral-900 rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 p-3 z-50 space-y-2 ${
-              wide ? 'w-72' : 'w-56'
-            }`}
+            className={`absolute left-0 right-0 sm:left-0 sm:right-auto mt-2 bg-white dark:bg-neutral-900 rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 p-3 z-50 space-y-2 w-[calc(100vw-2rem)] sm:w-56 ${
+              wide ? 'sm:w-72' : ''
+            } max-w-[calc(100vw-1rem)]`}
           >
             {children}
           </motion.div>

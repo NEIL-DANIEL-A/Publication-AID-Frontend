@@ -23,8 +23,7 @@ export function EventCard({ event, onViewDetail }: EventCardProps) {
       viewport={{ once: true, margin: '-60px' }}
       whileHover={{ y: -3 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="glass-card flex flex-col cursor-default group hover:shadow-card-hover dark:hover:shadow-card-hover-dark hover:border-accent-200 dark:hover:border-accent-800 transition-all duration-300 overflow-hidden"
-      style={{ height: '400px' }}
+      className="glass-card flex flex-col cursor-default group hover:shadow-card-hover dark:hover:shadow-card-hover-dark hover:border-accent-200 dark:hover:border-accent-800 transition-all duration-300 overflow-hidden min-h-[360px] sm:h-[400px] active:scale-[0.98] sm:active:scale-100 touch-manipulation"
       onClick={() => onViewDetail?.(event.id)}
       role={onViewDetail ? 'button' : 'article'}
       tabIndex={onViewDetail ? 0 : undefined}

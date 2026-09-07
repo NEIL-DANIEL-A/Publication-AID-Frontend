@@ -12,7 +12,7 @@ export function CategoryEventCard({ event }: { event: CategoryEvent }) {
       layout
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-card p-5 flex flex-col gap-3 hover:shadow-card-hover transition-all"
+      className="glass-card p-4 sm:p-5 flex flex-col gap-3 hover:shadow-card-hover transition-all active:scale-[0.98] sm:active:scale-100 touch-manipulation"
     >
       <div className="flex items-center gap-2 flex-wrap">
         <span className="badge bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-[10px]">{event.mode}</span>

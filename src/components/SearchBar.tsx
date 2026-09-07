@@ -11,7 +11,7 @@ export function SearchBar({ value, onChange, isLoading = false, placeholder = 'S
   const inputId = useId();
 
   return (
-    <div className="relative w-full max-w-2xl">
+    <div className="relative w-full max-w-2xl px-0">
       {/* Search icon — always visible on the left */}
       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500 pointer-events-none z-10">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
