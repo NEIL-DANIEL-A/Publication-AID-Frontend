@@ -23,6 +23,7 @@ export interface Event {
   sjr_2025?: string | null;
   coverage?: string | null;
   quartile?: string | null;
+  apc_results?: import('./journal').ApcResult[] | null;
   created_at: string;
   updated_at: string;
   _journal?: unknown;

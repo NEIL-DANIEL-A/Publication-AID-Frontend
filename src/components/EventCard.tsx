@@ -24,7 +24,7 @@ export function EventCard({ event, onViewDetail }: EventCardProps) {
       whileHover={{ y: -3 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
       className="glass-card flex flex-col cursor-default group hover:shadow-card-hover dark:hover:shadow-card-hover-dark hover:border-accent-200 dark:hover:border-accent-800 transition-all duration-300 overflow-hidden"
-      style={{ height: '380px' }}
+      style={{ height: '400px' }}
       onClick={() => onViewDetail?.(event.id)}
       role={onViewDetail ? 'button' : 'article'}
       tabIndex={onViewDetail ? 0 : undefined}
@@ -91,6 +91,18 @@ export function EventCard({ event, onViewDetail }: EventCardProps) {
         <div className="shrink-0" style={{ height: '32px' }}>
           <MetaRow label="Coverage" value={truncate(event.coverage ?? event.hackathon_date, 30)} />
         </div>
+
+        {/* APC */}
+        {(event.apc_results?.length ?? 0) > 0 && (
+          <div className="shrink-0 flex flex-wrap gap-1">
+            {event.apc_results!.slice(0, 3).map((a) => (
+              <span key={a.id} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 border border-violet-100 dark:border-violet-800/50">
+                {a.apc_currency} {a.apc_value} {a.apc_mode_normalized ? `· ${a.apc_mode_normalized}` : ''}
+              </span>
+            ))}
+            {(event.apc_results!.length > 3) && <span className="text-[10px] text-neutral-400">+{event.apc_results!.length - 3}</span>}
+          </div>
+        )}
       </div>
 
       {/* Footer pinned to bottom */}

@@ -45,6 +45,7 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
     'scopus_results!inner(*)',
     hasMjlFilter ? 'mjl_results!inner(*)' : 'mjl_results(*)',
     'scimago_results!inner(*)',
+    'apc_results(*)',
   ].join(', ');
 
   let query = supabaseDb
@@ -145,7 +146,7 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
 export async function fetchJournalById(id: string): Promise<JournalWithRelations | null> {
   const { data, error } = await supabaseDb
     .from('journals')
-    .select('*, cfr_results(*), scopus_results(*), mjl_results(*), scimago_results(*)')
+    .select('*, cfr_results(*), scopus_results(*), mjl_results(*), scimago_results(*), apc_results(*)')
     .eq('id', id)
     .single();
 

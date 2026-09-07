@@ -114,6 +114,29 @@ export function EventDetailPage() {
                 })}
             </dl>
 
+            {(event.apc_results?.length ?? 0) > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">APC — Article Processing Charges</h3>
+                <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-50 dark:bg-neutral-800/60 text-[11px] uppercase tracking-wider text-neutral-500">
+                      <tr><th className="px-3 py-2 text-left">Publisher</th><th className="px-3 py-2 text-left">Cost</th><th className="px-3 py-2 text-left">Currency</th><th className="px-3 py-2 text-left">Mode</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                      {event.apc_results!.map((a) => (
+                        <tr key={a.id}>
+                          <td className="px-3 py-2 font-medium">{a.publisher}</td>
+                          <td className="px-3 py-2 font-bold text-accent-600 dark:text-accent-400">{a.apc_value ?? '—'}</td>
+                          <td className="px-3 py-2"><span className="badge bg-violet-50 text-violet-700 text-[10px]">{a.apc_currency ?? '—'}</span></td>
+                          <td className="px-3 py-2"><span className="badge bg-amber-50 text-amber-700 text-[10px]">{a.apc_mode_normalized ?? a.apc_mode_raw ?? '—'}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             <div className="border-t border-neutral-100 dark:border-neutral-800" />
 
             {event.registration_url ? (

@@ -123,6 +123,8 @@ export function mapJournalToEvent(journal: JournalWithRelations) {
     return val;
   }
 
+  const apc = journal.apc_results ?? [];
+
   return {
     id: journal.id,
     title: journal.title,
@@ -144,6 +146,7 @@ export function mapJournalToEvent(journal: JournalWithRelations) {
     sjr_2025: clean(scimago?.sjr) || null,
     coverage: clean(scimago?.coverage) || clean(scopus?.scopus_coverage) || null,
     quartile: clean(scimago?.quartile) || null,
+    apc_results: apc,
     created_at: journal.created_at,
     updated_at: journal.updated_at,
     _journal: journal,

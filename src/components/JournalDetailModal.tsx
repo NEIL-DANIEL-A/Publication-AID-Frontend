@@ -44,6 +44,7 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
   const mjl = j?.mjl_results;
   const scimago = j?.scimago_results;
   const cfr = j?.cfr_results;
+  const apcResults = j?.apc_results ?? [];
 
   const searchUrl = scimago?.url || `https://www.google.com/search?q=${encodeURIComponent(journal.title)}`;
 
@@ -114,6 +115,32 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
             <MetricBox label="Quartile" value={scimago?.quartile ?? journal.quartile ?? 'N/A'} />
             <MetricBox label="Coverage" value={scimago?.coverage ?? journal.coverage ?? 'N/A'} />
           </div>
+
+          {/* APC */}
+          {apcResults.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                APC — Article Processing Charges
+              </h3>
+              <div className="rounded-xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-50 dark:bg-neutral-800/60 text-[11px] uppercase tracking-wider text-neutral-500">
+                    <tr><th className="px-3 py-2 text-left">Publisher</th><th className="px-3 py-2 text-left">Cost</th><th className="px-3 py-2 text-left">Currency</th><th className="px-3 py-2 text-left">Mode</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                    {apcResults.map((a) => (
+                      <tr key={a.id}>
+                        <td className="px-3 py-2 font-medium text-neutral-800 dark:text-neutral-200">{a.publisher}</td>
+                        <td className="px-3 py-2 font-bold text-accent-600 dark:text-accent-400">{a.apc_value ?? '—'}</td>
+                        <td className="px-3 py-2"><span className="inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">{a.apc_currency ?? '—'}</span></td>
+                        <td className="px-3 py-2"><span className="inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">{a.apc_mode_normalized ?? a.apc_mode_raw ?? '—'}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Source Breakdown with inline changes */}
           <DetailRowSection journalId={j?.id} journal={journal} scopus={scopus ?? null} mjl={mjl ?? null} scimago={scimago ?? null} cfr={cfr ?? null} />

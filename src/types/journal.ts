@@ -117,9 +117,22 @@ export interface SkippedRecord {
   skipped_at: string;
 }
 
+export interface ApcResult {
+  id: string;
+  journal_id: string;
+  publisher: string;
+  apc_value: string | null;
+  apc_currency: string | null;
+  apc_mode_raw: string | null;
+  apc_mode_normalized: string | null;
+  source_file: string | null;
+  updated_at: string;
+}
+
 export interface JournalWithRelations extends Journal {
   cfr_results: CfrResult | null;
   scopus_results: ScopusResult | null;
   mjl_results: MjlResult | null;
   scimago_results: ScimagoResult | null;
+  apc_results: ApcResult[] | null;
 }
