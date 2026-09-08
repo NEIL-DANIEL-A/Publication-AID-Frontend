@@ -117,7 +117,7 @@ export function EventDetailPage() {
             {(event.apc_results?.length ?? 0) > 0 && (
               <div className="space-y-2">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">APC — Article Processing Charges</h3>
-                <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                <div className="hidden sm:block rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                   <table className="w-full text-xs">
                     <thead className="bg-slate-50 dark:bg-neutral-800/60 text-[11px] uppercase tracking-wider text-neutral-500">
                       <tr><th className="px-3 py-2 text-left">Publisher</th><th className="px-3 py-2 text-left">Cost</th><th className="px-3 py-2 text-left">Currency</th><th className="px-3 py-2 text-left">Mode</th></tr>
@@ -133,6 +133,30 @@ export function EventDetailPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+                <div className="sm:hidden space-y-2">
+                  {event.apc_results!.map((a) => (
+                    <div key={a.id} className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3 space-y-2 bg-slate-50/50 dark:bg-neutral-800/30">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Publisher</span>
+                        <span className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">{a.publisher}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="rounded-lg bg-white dark:bg-neutral-900 p-2 border border-neutral-100 dark:border-neutral-800">
+                          <div className="text-[10px] uppercase tracking-wider text-neutral-400">Cost</div>
+                          <div className="text-sm font-bold text-accent-600 dark:text-accent-400">{a.apc_value ?? '—'}</div>
+                        </div>
+                        <div className="rounded-lg bg-white dark:bg-neutral-900 p-2 border border-neutral-100 dark:border-neutral-800">
+                          <div className="text-[10px] uppercase tracking-wider text-neutral-400">Currency</div>
+                          <div className="text-xs font-bold text-violet-700 dark:text-violet-300">{a.apc_currency ?? '—'}</div>
+                        </div>
+                        <div className="rounded-lg bg-white dark:bg-neutral-900 p-2 border border-neutral-100 dark:border-neutral-800">
+                          <div className="text-[10px] uppercase tracking-wider text-neutral-400">Mode</div>
+                          <div className="text-xs font-bold text-amber-700 dark:text-amber-300 truncate">{a.apc_mode_normalized ?? a.apc_mode_raw ?? '—'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
