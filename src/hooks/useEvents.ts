@@ -95,10 +95,10 @@ export function useAllPipelineRuns(page: number, limit = 10) {
   });
 }
 
-export function useAllChanges(page: number, limit = 20) {
+export function useAllChanges(page: number, limit = 20, onlyApc = false) {
   return useQuery({
-    queryKey: ['allChanges', page, limit],
-    queryFn: () => fetchAllChanges(page, limit),
+    queryKey: ['allChanges', page, limit, onlyApc],
+    queryFn: () => fetchAllChanges(page, limit, onlyApc),
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
     placeholderData: (prev) => prev,

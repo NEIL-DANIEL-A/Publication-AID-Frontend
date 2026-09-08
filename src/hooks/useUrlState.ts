@@ -23,6 +23,7 @@ export function useUrlState(): [FilterState, SetFilters] {
       max_sjr:     p.get('max_sjr')     ? parseFloat(p.get('max_sjr')!)  : 0,
       min_h_index: p.get('min_h')       ? parseInt(p.get('min_h')!, 10)  : 0,
       max_h_index: p.get('max_hi')      ? parseInt(p.get('max_hi')!, 10) : 0,
+      has_apc:     p.get('has_apc')     === '1',
       fee:         p.get('fee')         ?? DEFAULT_FILTERS.fee,
       eligibility: p.get('eligibility') ?? DEFAULT_FILTERS.eligibility,
       coverage:    p.get('coverage')    ?? DEFAULT_FILTERS.coverage,
@@ -51,6 +52,7 @@ export function useUrlState(): [FilterState, SetFilters] {
       if (next.max_sjr && next.max_sjr > 0)     p.set('max_sjr', String(next.max_sjr));
       if (next.min_h_index && next.min_h_index > 0) p.set('min_h',  String(next.min_h_index));
       if (next.max_h_index && next.max_h_index > 0) p.set('max_hi', String(next.max_h_index));
+      if (next.has_apc)     p.set('has_apc', '1');
       if (next.fee)         p.set('fee',         next.fee);
       if (next.eligibility) p.set('eligibility', next.eligibility);
       if (next.coverage)    p.set('coverage',    next.coverage);

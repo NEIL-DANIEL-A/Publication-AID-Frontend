@@ -50,6 +50,7 @@ export interface FilterState {
   max_sjr: number;
   min_h_index: number;
   max_h_index: number;
+  has_apc: boolean;
   fee: string;
   eligibility: string;
   coverage: string;
@@ -70,6 +71,7 @@ export const DEFAULT_FILTERS: FilterState = {
   max_sjr: 0,
   min_h_index: 0,
   max_h_index: 0,
+  has_apc: false,
   fee: '',
   eligibility: '',
   coverage: '',

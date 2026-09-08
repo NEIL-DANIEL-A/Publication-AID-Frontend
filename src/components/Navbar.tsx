@@ -113,23 +113,27 @@ export function Navbar() {
         <div className="flex items-center gap-1.5 sm:gap-2">
           <nav className="hidden md:flex items-center gap-1">
             {([
+              { to: '/', label: 'Journals' },
               { to: '/hackathons', label: 'Hackathons' },
               { to: '/symposiums', label: 'Symposiums' },
               { to: '/conferences', label: 'Conferences' },
               { to: '/workshops', label: 'Workshops' },
-            ] as const).map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
-                  location.pathname.startsWith(item.to)
-                    ? 'bg-accent-600 text-white shadow-sm'
-                    : 'text-neutral-700 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            ] as const).map((item) => {
+              const isActive = item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                    isActive
+                      ? 'bg-accent-600 text-white shadow-sm'
+                      : 'text-neutral-700 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
           <Link
             to="/admin"
@@ -269,7 +273,7 @@ export function Navbar() {
           >
             <nav className="px-4 py-3 flex flex-col gap-1">
               {[
-                { to: '/', label: 'Home' },
+                { to: '/', label: 'Journals' },
                 { to: '/hackathons', label: 'Hackathons' },
                 { to: '/symposiums', label: 'Symposiums' },
                 { to: '/conferences', label: 'Conferences' },

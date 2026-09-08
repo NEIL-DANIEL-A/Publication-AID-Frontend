@@ -9,6 +9,7 @@ type Tab = 'pipeline' | 'changes';
 
 export function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>('pipeline');
+  const [onlyApc, setOnlyApc] = useState(false);
   const { data: latestRun } = usePipelineRun();
 
   return (
@@ -31,32 +32,39 @@ export function AdminPage() {
         {/* Latest run */}
         {latestRun && <PipelineStatusCard run={latestRun} />}
 
-        {/* Tabs */}
-        <div className="glass-card p-1.5 flex gap-1.5 w-fit">
-          <button
-            onClick={() => setActiveTab('pipeline')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              activeTab === 'pipeline'
-                ? 'bg-accent-600 text-white shadow-sm'
-                : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-            }`}
-          >
-            Pipeline History
-          </button>
-          <button
-            onClick={() => setActiveTab('changes')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              activeTab === 'changes'
-                ? 'bg-accent-600 text-white shadow-sm'
-                : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-            }`}
-          >
-            All Changes
-          </button>
+        {/* Tabs + APC toggle */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="glass-card p-1.5 flex gap-1.5 w-fit">
+            <button
+              onClick={() => setActiveTab('pipeline')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                activeTab === 'pipeline'
+                  ? 'bg-accent-600 text-white shadow-sm'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+              }`}
+            >
+              Pipeline History
+            </button>
+            <button
+              onClick={() => setActiveTab('changes')}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                activeTab === 'changes'
+                  ? 'bg-accent-600 text-white shadow-sm'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+              }`}
+            >
+              All Changes
+            </button>
+          </div>
+
+          <label className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/80 text-xs font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer select-none shadow-sm ml-auto">
+            <input type="checkbox" checked={onlyApc} onChange={(e) => setOnlyApc(e.target.checked)} className="rounded border-slate-300 text-accent-600 focus:ring-accent-500" />
+            Only APC records
+          </label>
         </div>
 
         {/* Tab content */}
-        {activeTab === 'pipeline' ? <PipelineHistoryTab /> : <ChangesHistoryTab />}
+        {activeTab === 'pipeline' ? <PipelineHistoryTab /> : <ChangesHistoryTab onlyApc={onlyApc} />}
       </main>
     </div>
   );
@@ -123,10 +131,10 @@ function PipelineHistoryTab() {
   );
 }
 
-function ChangesHistoryTab() {
+function ChangesHistoryTab({ onlyApc = false }: { onlyApc?: boolean }) {
   const [page, setPage] = useState(1);
   const limit = 20;
-  const { data, isLoading } = useAllChanges(page, limit);
+  const { data, isLoading } = useAllChanges(page, limit, onlyApc);
   const navigate = useNavigate();
   const changes = data?.data ?? [];
   const total = data?.total ?? 0;

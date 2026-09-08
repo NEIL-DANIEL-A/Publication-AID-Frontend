@@ -36,6 +36,7 @@ export function HomePage() {
     max_sjr: filters.max_sjr || undefined,
     min_h_index: filters.min_h_index || undefined,
     max_h_index: filters.max_h_index || undefined,
+    has_apc: filters.has_apc || undefined,
   };
 
   const { data, isLoading, isFetching, isError, error, refetch } = useEvents(effectiveFilters, LIMIT);
@@ -49,7 +50,8 @@ export function HomePage() {
     filters.min_sjr > 0 ||
     filters.max_sjr > 0 ||
     filters.min_h_index > 0 ||
-    filters.max_h_index > 0
+    filters.max_h_index > 0 ||
+    filters.has_apc
   );
 
   function handleSearchChange(val: string) {

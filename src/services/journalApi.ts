@@ -19,6 +19,7 @@ export interface JournalFilters {
   max_sjr?: number;
   min_h_index?: number;
   max_h_index?: number;
+  has_apc?: boolean;
   sort?: string;
   page?: number;
 }
@@ -39,13 +40,14 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
   const hasNotMjl = mjlVals.includes('Not MJL Indexed');
   const hasRealMjl = mjlVals.some((v) => v !== 'Not MJL Indexed');
   const hasMjlFilter = !!filters.mjl_index;
+  const hasApcFilter = !!filters.has_apc;
 
   const select = [
     'cfr_results(*)',
     'scopus_results!inner(*)',
     hasMjlFilter ? 'mjl_results!inner(*)' : 'mjl_results(*)',
     'scimago_results!inner(*)',
-    'apc_results(*)',
+    hasApcFilter ? 'apc_results!inner(*)' : 'apc_results(*)',
   ].join(', ');
 
   let query = supabaseDb
@@ -278,15 +280,44 @@ export async function fetchAllPipelineRuns(page = 1, limit = 10): Promise<{ data
   return { data: runs, total: count ?? 0 };
 }
 
-export async function fetchAllChanges(page = 1, limit = 20): Promise<{ data: RecentChange[]; total: number }> {
+export async function fetchAllChanges(page = 1, limit = 20, onlyApc = false): Promise<{ data: RecentChange[]; total: number }> {
   const from = (page - 1) * limit;
   const to = from + limit - 1;
-  const { data, count, error } = await supabaseDb
+
+  let apcIds: Set<string> | null = null;
+  if (onlyApc) {
+    const ids = await fetchAll<{ journal_id: string }>('apc_results', 'journal_id');
+    apcIds = new Set(ids.map((r) => r.journal_id));
+    if (apcIds.size === 0) return { data: [], total: 0 };
+  }
+
+  let query = supabaseDb
     .from('journal_changes')
     .select('*', { count: 'exact' })
     .neq('field_name', 'data_hash')
-    .order('changed_at', { ascending: false })
-    .range(from, to);
+    .order('changed_at', { ascending: false });
+
+  if (onlyApc && apcIds) {
+    // Supabase IN has 1000-item limit; paginate if needed by filtering after fetch is simpler, but we try IN with first 1000
+    // For exact count we fetch filtered via multiple queries — fallback to client-side filter for now
+    // Instead, fetch without IN and filter client-side with correct pagination via loop
+    const { data: all, error } = await supabaseDb
+      .from('journal_changes')
+      .select('*')
+      .neq('field_name', 'data_hash')
+      .order('changed_at', { ascending: false });
+    if (error || !all) return { data: [], total: 0 };
+    const filtered = (all as JournalChange[]).filter((c) => apcIds!.has(c.journal_id));
+    const total = filtered.length;
+    const pageData = filtered.slice(from, to + 1);
+    const ids = [...new Set(pageData.map((c) => c.journal_id))];
+    const { data: journals } = await supabaseDb.from('journals').select('id, title').in('id', ids);
+    const titleMap = new Map<string, string>();
+    (journals ?? []).forEach((j: { id: string; title: string }) => titleMap.set(j.id, j.title));
+    return { data: pageData.map((c) => ({ ...c, journal_title: titleMap.get(c.journal_id) ?? null })), total };
+  }
+
+  const { data, count, error } = await query.range(from, to);
 
   if (error || !data || data.length === 0) {
     if (error) console.error('[JournalAPI] fetchAllChanges error:', error);

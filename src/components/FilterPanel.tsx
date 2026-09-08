@@ -93,6 +93,7 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
     filters.publisher,
     filters.min_sjr > 0 || filters.max_sjr > 0,
     filters.min_h_index > 0 || filters.max_h_index > 0,
+    filters.has_apc,
   ].filter(Boolean).length;
 
   const hasActiveFilters = activeFilterCount > 0;
@@ -108,6 +109,7 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
       max_sjr: DEFAULT_FILTERS.max_sjr,
       min_h_index: DEFAULT_FILTERS.min_h_index,
       max_h_index: DEFAULT_FILTERS.max_h_index,
+      has_apc: DEFAULT_FILTERS.has_apc,
     });
     setPublisherSearch('');
     setActiveDropdown(null);
@@ -244,6 +246,15 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
             <input type="number" min="0" value={filters.max_h_index || ''} onChange={(e) => onChange({ max_h_index: e.target.value ? parseInt(e.target.value) : 0 })} placeholder="Max" className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-accent-500" />
           </div>
         </FilterDropdown>
+
+        <label className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border cursor-pointer select-none transition-colors ${
+          filters.has_apc
+            ? 'bg-accent-600 text-white border-accent-600 shadow-sm'
+            : 'bg-white dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:border-slate-300'
+        }`}>
+          <input type="checkbox" checked={filters.has_apc} onChange={(e) => onChange({ has_apc: e.target.checked })} className="rounded border-slate-300 text-accent-600 focus:ring-accent-500 w-3.5 h-3.5" />
+          Only APC
+        </label>
       </div>
 
       {/* Active filter chips */}
@@ -292,6 +303,9 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
                 onRemove={() => onChange({ min_h_index: 0, max_h_index: 0 })}
               />
             )}
+            {filters.has_apc && (
+              <Chip label="Only APC" onRemove={() => onChange({ has_apc: false })} />
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -326,17 +340,21 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 6, scale: 0.98 }}
-            transition={{ duration: 0.15 }}
-            className={`absolute left-0 right-0 sm:left-0 sm:right-auto mt-2 bg-white dark:bg-neutral-900 rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 p-3 z-50 space-y-2 w-[calc(100vw-2rem)] sm:w-56 ${
-              wide ? 'sm:w-72' : ''
-            } max-w-[calc(100vw-1rem)]`}
-          >
-            {children}
-          </motion.div>
+          <>
+            {/* Mobile backdrop — leaves space around dropdown to click to close */}
+            <div className="fixed inset-0 bg-black/10 backdrop-blur-[1px] sm:hidden z-40" onClick={onToggle} aria-hidden />
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.18 }}
+              className={`fixed sm:absolute bottom-4 sm:bottom-auto left-4 right-4 sm:left-0 sm:right-auto sm:top-full sm:mt-2 bg-white dark:bg-neutral-900 rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 p-3 z-50 space-y-2 w-auto sm:w-56 ${
+                wide ? 'sm:w-72' : ''
+              } max-h-[60vh] sm:max-h-96 overflow-y-auto`}
+            >
+              {children}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
