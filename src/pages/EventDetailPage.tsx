@@ -117,6 +117,21 @@ export function EventDetailPage() {
             {(event.apc_results?.length ?? 0) > 0 && (
               <div className="space-y-2">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">APC — Article Processing Charges</h3>
+                {(() => {
+                  const apcCs = (changes ?? []).filter((c) => c.source === 'apc');
+                  return apcCs.length > 0 ? (
+                    <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 p-2 space-y-1 text-[11px]">
+                      {apcCs.map((c) => (
+                        <div key={c.id} className="flex flex-wrap gap-1 items-center">
+                          <span className="font-semibold text-amber-800 dark:text-amber-300">{c.field_name}</span>
+                          <span className="line-through text-red-500">{c.old_value || '—'}</span>
+                          <span>→</span>
+                          <span className="text-emerald-700 dark:text-emerald-400 font-semibold break-all">{c.new_value || '—'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
                 <div className="hidden sm:block rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                   <table className="w-full text-xs">
                     <thead className="bg-slate-50 dark:bg-neutral-800/60 text-[11px] uppercase tracking-wider text-neutral-500">

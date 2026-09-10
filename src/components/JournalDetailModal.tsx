@@ -23,6 +23,9 @@ interface JournalDetailModalProps {
 }
 
 export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal, onClose }) => {
+  const j = (journal?._journal as JournalWithRelations | undefined) ?? undefined;
+  const { data: modalChanges } = useJournalChanges(j?.id ?? null);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -39,12 +42,12 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
 
   if (!journal) return null;
 
-  const j = journal._journal as JournalWithRelations | undefined;
   const scopus = j?.scopus_results;
   const mjl = j?.mjl_results;
   const scimago = j?.scimago_results;
   const cfr = j?.cfr_results;
   const apcResults = j?.apc_results ?? [];
+  const apcChanges = (modalChanges ?? []).filter((c) => c.source === 'apc');
 
   const searchUrl = scimago?.url || `https://www.google.com/search?q=${encodeURIComponent(journal.title)}`;
 
@@ -122,6 +125,18 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({ journal,
               <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                 APC — Article Processing Charges
               </h3>
+              {apcChanges.length > 0 && (
+                <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 p-2 space-y-1 text-[11px]">
+                  {apcChanges.map((c) => (
+                    <div key={c.id} className="flex flex-wrap gap-1 items-center">
+                      <span className="font-semibold text-amber-800 dark:text-amber-300">{c.field_name}</span>
+                      <span className="line-through text-red-500">{c.old_value || '—'}</span>
+                      <span>→</span>
+                      <span className="text-emerald-700 dark:text-emerald-400 font-semibold break-all">{c.new_value || '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {/* Desktop table */}
               <div className="hidden sm:block rounded-xl border border-neutral-200/80 dark:border-neutral-800 overflow-hidden">
                 <table className="w-full text-xs">

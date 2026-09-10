@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { usePipelineRun, useAllPipelineRuns, useAllChanges } from '../hooks/useEvents';
+import { usePipelineRun, useAllPipelineRuns, useAllChanges, useChangeFields } from '../hooks/useEvents';
 import { PipelineStatusCard } from '../components/PipelineStatusCard';
 import { Pagination } from '../components/Pagination';
 
 type Tab = 'pipeline' | 'changes';
 
 export function AdminPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('pipeline');
-  const [onlyApc, setOnlyApc] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') as Tab) || 'pipeline';
+  const setActiveTab = (tab: Tab) => {
+    const p = new URLSearchParams(searchParams);
+    p.set('tab', tab);
+    setSearchParams(p, { replace: true });
+  };
   const { data: latestRun } = usePipelineRun();
 
   return (
@@ -32,39 +37,32 @@ export function AdminPage() {
         {/* Latest run */}
         {latestRun && <PipelineStatusCard run={latestRun} />}
 
-        {/* Tabs + APC toggle */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="glass-card p-1.5 flex gap-1.5 w-fit">
-            <button
-              onClick={() => setActiveTab('pipeline')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                activeTab === 'pipeline'
-                  ? 'bg-accent-600 text-white shadow-sm'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              Pipeline History
-            </button>
-            <button
-              onClick={() => setActiveTab('changes')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                activeTab === 'changes'
-                  ? 'bg-accent-600 text-white shadow-sm'
-                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              All Changes
-            </button>
-          </div>
-
-          <label className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/80 text-xs font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer select-none shadow-sm ml-auto">
-            <input type="checkbox" checked={onlyApc} onChange={(e) => setOnlyApc(e.target.checked)} className="rounded border-slate-300 text-accent-600 focus:ring-accent-500" />
-            Only APC records
-          </label>
+        {/* Tabs */}
+        <div className="glass-card p-1.5 flex gap-1.5 w-fit">
+          <button
+            onClick={() => setActiveTab('pipeline')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              activeTab === 'pipeline'
+                ? 'bg-accent-600 text-white shadow-sm'
+                : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+            }`}
+          >
+            Pipeline History
+          </button>
+          <button
+            onClick={() => setActiveTab('changes')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+              activeTab === 'changes'
+                ? 'bg-accent-600 text-white shadow-sm'
+                : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+            }`}
+          >
+            All Changes
+          </button>
         </div>
 
         {/* Tab content */}
-        {activeTab === 'pipeline' ? <PipelineHistoryTab /> : <ChangesHistoryTab onlyApc={onlyApc} />}
+        {activeTab === 'pipeline' ? <PipelineHistoryTab /> : <ChangesHistoryTab />}
       </main>
     </div>
   );
@@ -131,49 +129,108 @@ function PipelineHistoryTab() {
   );
 }
 
-function ChangesHistoryTab({ onlyApc = false }: { onlyApc?: boolean }) {
-  const [page, setPage] = useState(1);
+function ChangesHistoryTab() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = parseInt(searchParams.get('page') ?? '1', 10);
+  const hideHash = searchParams.get('hideHash') === '1';
+  const fieldFilter = searchParams.get('field') ?? '';
+  const selectedRun = searchParams.get('run') ?? '';
   const limit = 20;
-  const { data, isLoading } = useAllChanges(page, limit, onlyApc);
+  const { data, isLoading } = useAllChanges(page, limit, { hideHash, field: fieldFilter || undefined, pipelineRunId: selectedRun || undefined });
+  const { data: fields } = useChangeFields();
+  const { data: runsData } = useAllPipelineRuns(1, 50);
   const navigate = useNavigate();
   const changes = data?.data ?? [];
   const total = data?.total ?? 0;
 
+  const updateParam = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams);
+    if (value) p.set(key, value); else p.delete(key);
+    if (key !== 'page') p.delete('page');
+    setSearchParams(p, { replace: true });
+  };
+
   if (isLoading) return <div className="glass-card p-8 text-center text-sm text-neutral-400">Loading...</div>;
-  if (changes.length === 0) return <div className="glass-card p-8 text-center text-sm text-neutral-400">No changes yet</div>;
 
   return (
     <div className="space-y-4">
-      <div className="glass-card overflow-hidden">
-        <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-          {changes.map((c) => (
-            <motion.div
-              key={c.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="px-4 py-3 flex items-start gap-3 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors cursor-pointer"
-              onClick={() => navigate(`/events/${c.journal_id}?highlight=${c.field_name}`)}
-            >
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 uppercase shrink-0 mt-0.5">
-                {c.source}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate">{c.journal_title ?? c.journal_id.slice(0, 8)}</p>
-                <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                  <span className="font-medium">{c.field_name}</span>
-                  <span className="line-through text-red-400 dark:text-red-500">{c.old_value ?? '—'}</span>
-                  <span>→</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{c.new_value ?? '—'}</span>
-                </p>
-              </div>
-              <span className="text-[11px] text-neutral-400 dark:text-neutral-500 shrink-0 whitespace-nowrap">
-                {new Date(c.changed_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </motion.div>
+      {/* Filters */}
+      <div className="glass-card p-3 flex flex-wrap items-center gap-3">
+        <select
+          value={selectedRun}
+          onChange={(e) => updateParam('run', e.target.value)}
+          className="px-3 py-1.5 rounded-xl text-xs bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-accent-500 max-w-[200px]"
+        >
+          <option value="">All pipeline runs</option>
+          {(runsData?.data ?? []).map((r) => (
+            <option key={r.id} value={r.id}>
+              {new Date(r.started_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} — {r.status} ({r.updated_records} updated)
+            </option>
           ))}
-        </div>
+        </select>
+        <label className="flex items-center gap-2 text-xs font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer select-none">
+          <input type="checkbox" checked={hideHash} onChange={(e) => updateParam('hideHash', e.target.checked ? '1' : '')} className="rounded border-neutral-300 text-accent-600 focus:ring-accent-500" />
+          Hide hash
+        </label>
+        <select
+          value={fieldFilter}
+          onChange={(e) => updateParam('field', e.target.value)}
+          className="px-3 py-1.5 rounded-xl text-xs bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-accent-500"
+        >
+          <option value="">All fields</option>
+          {(fields ?? []).map((f) => (
+            <option key={f} value={f}>{f}</option>
+          ))}
+        </select>
+        {(hideHash || fieldFilter || selectedRun) && (
+          <button onClick={() => { const p=new URLSearchParams(searchParams); p.delete('hideHash'); p.delete('field'); p.delete('run'); p.delete('page'); setSearchParams(p,{replace:true}); }} className="text-xs text-accent-600 hover:underline">Reset</button>
+        )}
+        <span className="ml-auto text-xs text-neutral-400">{total} changes</span>
       </div>
-      <Pagination page={page} total={total} limit={limit} onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
+
+      {changes.length === 0 ? (
+        <div className="glass-card p-8 text-center text-sm text-neutral-400">No changes yet</div>
+      ) : (
+        <div className="glass-card overflow-hidden">
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+            {changes.map((c) => {
+              const isHash = c.field_name === 'data_hash';
+              return (
+                <motion.div
+                  key={c.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="px-4 py-3 flex items-start gap-3 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/30 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/admin/journal/${c.journal_id}${isHash ? '' : `?highlight=${c.field_name}`}`)}
+                >
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 uppercase shrink-0 mt-0.5">
+                    {c.source}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate">{c.journal_title ?? c.journal_id.slice(0, 8)}</p>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      {isHash ? (
+                        <span className="font-medium">Journal data updated</span>
+                      ) : (
+                        <>
+                          <span className="font-medium">{c.field_name}</span>
+                          <span className="line-through text-red-400 dark:text-red-500">{c.old_value ?? '—'}</span>
+                          <span>→</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{c.new_value ?? '—'}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <span className="text-[11px] text-neutral-400 dark:text-neutral-500 shrink-0 whitespace-nowrap">
+                    {new Date(c.changed_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      <Pagination page={page} total={total} limit={limit} onPageChange={(p) => updateParam('page', p > 1 ? String(p) : '')} />
     </div>
   );
 }

@@ -28,6 +28,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/events/:id" element={<EventDetailPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/journal/:id" element={<EventDetailPage />} />
           <Route path="/hackathons" element={<CategoryPage category="hackathon" />} />
           <Route path="/hackathons/:id" element={<CategoryDetailPage />} />
           <Route path="/symposiums" element={<CategoryPage category="symposium" />} />

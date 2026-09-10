@@ -9,6 +9,7 @@ import {
   fetchRecentChanges,
   fetchAllPipelineRuns,
   fetchAllChanges,
+  fetchChangeFields,
   type JournalFilters,
 } from '../services/journalApi';
 import type { JournalWithRelations } from '../types/journal';
@@ -95,13 +96,22 @@ export function useAllPipelineRuns(page: number, limit = 10) {
   });
 }
 
-export function useAllChanges(page: number, limit = 20, onlyApc = false) {
+export function useAllChanges(page: number, limit = 20, opts: { hideHash?: boolean; field?: string; pipelineRunId?: string } = {}) {
   return useQuery({
-    queryKey: ['allChanges', page, limit, onlyApc],
-    queryFn: () => fetchAllChanges(page, limit, onlyApc),
+    queryKey: ['allChanges', page, limit, opts.hideHash, opts.field, opts.pipelineRunId],
+    queryFn: () => fetchAllChanges(page, limit, opts),
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
     placeholderData: (prev) => prev,
+  });
+}
+
+export function useChangeFields() {
+  return useQuery({
+    queryKey: ['changeFields'],
+    queryFn: fetchChangeFields,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
 
