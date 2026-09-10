@@ -20,6 +20,7 @@ export interface JournalFilters {
   min_h_index?: number;
   max_h_index?: number;
   has_apc?: boolean;
+  without_apc?: boolean;
   sort?: string;
   page?: number;
 }
@@ -41,6 +42,7 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
   const hasRealMjl = mjlVals.some((v) => v !== 'Not MJL Indexed');
   const hasMjlFilter = !!filters.mjl_index;
   const hasApcFilter = !!filters.has_apc;
+  const hasWithoutApcFilter = !!filters.without_apc;
 
   const select = [
     'cfr_results(*)',
@@ -60,6 +62,10 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
 
   // Exclude journals where pipeline skipped data collection
   query = query.not('scimago_results.sjr', 'is', null).not('scimago_results.sjr', 'ilike', '%skipped%');
+
+  // Without APC needs client-side filtering (PostgREST left-join is-null doesn't work reliably)
+  // Handle it after the main query via separate logic
+  const needsWithoutApcClientFilter = hasWithoutApcFilter;
 
   if (filters.scopus_status) {
     const vals = filters.scopus_status.split(',').map((s) => s.trim()).filter(Boolean);
@@ -95,7 +101,19 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
 
   if (filters.publisher) {
     const pubs = filters.publisher.split(',').map((s) => s.trim()).filter(Boolean);
-    if (pubs.length === 1) {
+    const hasElsevierGroup = pubs.includes('ELSEVIER_GROUP');
+    const otherPubs = pubs.filter((p) => p !== 'ELSEVIER_GROUP');
+    if (hasElsevierGroup && otherPubs.length === 0) {
+      query = query.ilike('publisher', '%ELSEVIER%');
+    } else if (hasElsevierGroup) {
+      const parts: string[] = ['publisher.ilike.%ELSEVIER%'];
+      if (otherPubs.length === 1) parts.push(`publisher.eq."${otherPubs[0].replace(/"/g, '\\"')}"`);
+      else if (otherPubs.length > 1) {
+        const quoted = otherPubs.map((p) => `"${p.replace(/"/g, '\\"')}"`).join(',');
+        parts.push(`publisher.in.(${quoted})`);
+      }
+      query = query.or(parts.join(','));
+    } else if (pubs.length === 1) {
       query = query.eq('publisher', pubs[0]);
     } else if (pubs.length > 1) {
       query = query.in('publisher', pubs);
@@ -128,6 +146,26 @@ export async function fetchJournals(filters: JournalFilters = {}): Promise<Pagin
   const sortCol = filters.sort === 'title_asc' || filters.sort === 'title_desc' ? 'title' : 'title';
   const ascending = filters.sort !== 'title_desc';
   query = query.order(sortCol, { ascending });
+
+  // Without APC needs client-side filtering (PostgREST left-join is-null is unreliable)
+  if (needsWithoutApcClientFilter) {
+    const all: JournalWithRelations[] = [];
+    let offset = 0;
+    const size = 1000;
+    while (true) {
+      const { data: chunk, error: chunkErr } = await query.range(offset, offset + size - 1);
+      if (chunkErr) throw new Error(chunkErr.message);
+      if (!chunk || chunk.length === 0) break;
+      all.push(...(chunk as unknown as JournalWithRelations[]));
+      if (chunk.length < size) break;
+      offset += size;
+      if (offset > 20000) break;
+    }
+    const filtered = all.filter((j) => !j.apc_results || j.apc_results.length === 0);
+    const total = filtered.length;
+    const paginated = filtered.slice(from, to + 1);
+    return { data: paginated, total, page, limit: PAGE_SIZE };
+  }
 
   query = query.range(from, to);
 

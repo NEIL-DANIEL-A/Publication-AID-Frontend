@@ -16,6 +16,7 @@ interface FilterPanelProps {
 export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProps) {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [publisherSearch, setPublisherSearch] = useState('');
+  const [elsevierExpanded, setElsevierExpanded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { data: counts } = useJournalCounts();
 
@@ -75,15 +76,41 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
     : [];
 
   function handlePublisherCheck(pub: string) {
+    const isElsevierVariant = pub.toLowerCase().includes('elsevier');
+    if (isElsevierVariant && isElsevierGroupChecked) {
+      // Deselecting one member from the group: expand group into individual variants minus this one
+      const otherVariants = elsevierAll.filter((v) => v !== pub);
+      const withoutGroup = selectedPublishers.filter((p) => p !== ELSEVIER_GROUP);
+      onChange({ publisher: [...withoutGroup, ...otherVariants].join(',') });
+      return;
+    }
     const next = selectedPublishers.includes(pub)
       ? selectedPublishers.filter((item) => item !== pub)
       : [...selectedPublishers, pub];
     onChange({ publisher: next.join(',') });
   }
 
+  const allPublishers = counts?.publishers ?? [];
+  const elsevierAll = allPublishers.filter((p) => p.toLowerCase().includes('elsevier'));
+  const ELSEVIER_GROUP = 'ELSEVIER_GROUP';
+  const isElsevierGroupChecked = selectedPublishers.includes(ELSEVIER_GROUP);
+
+  function handleElsevierGroupCheck() {
+    let next: string[];
+    if (isElsevierGroupChecked) {
+      next = selectedPublishers.filter((p) => p !== ELSEVIER_GROUP);
+    } else {
+      const withoutElsevierVariants = selectedPublishers.filter((p) => !p.toLowerCase().includes('elsevier'));
+      next = [...withoutElsevierVariants, ELSEVIER_GROUP];
+    }
+    onChange({ publisher: next.join(',') });
+  }
+
   const publishers = (counts?.publishers ?? []).filter((p) =>
     publisherSearch ? p.toLowerCase().includes(publisherSearch.toLowerCase()) : true
   );
+  const elsevierPublishers = publishers.filter((p) => p.toLowerCase().includes('elsevier'));
+  const otherPublishers = publishers.filter((p) => !p.toLowerCase().includes('elsevier'));
 
   const activeFilterCount = [
     filters.search,
@@ -94,6 +121,7 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
     filters.min_sjr > 0 || filters.max_sjr > 0,
     filters.min_h_index > 0 || filters.max_h_index > 0,
     filters.has_apc,
+    filters.without_apc,
   ].filter(Boolean).length;
 
   const hasActiveFilters = activeFilterCount > 0;
@@ -110,6 +138,7 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
       min_h_index: DEFAULT_FILTERS.min_h_index,
       max_h_index: DEFAULT_FILTERS.max_h_index,
       has_apc: DEFAULT_FILTERS.has_apc,
+      without_apc: DEFAULT_FILTERS.without_apc,
     });
     setPublisherSearch('');
     setActiveDropdown(null);
@@ -209,9 +238,31 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
             placeholder="Search..."
             className="w-full px-2.5 py-1.5 rounded-lg text-xs bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-accent-500 mb-1"
           />
-          <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
-            {publishers.length === 0 && <p className="text-[11px] text-neutral-400">No matches</p>}
-            {publishers.map((p) => (
+          <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+            {/* Elsevier group */}
+            {elsevierPublishers.length > 0 && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-2 py-1 px-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
+                  <label className="flex items-center gap-2 text-xs text-neutral-700 dark:text-neutral-300 cursor-pointer select-none flex-1">
+                    <input type="checkbox" checked={isElsevierGroupChecked} onChange={handleElsevierGroupCheck} className="rounded border-neutral-300 text-accent-600 focus:ring-accent-500" />
+                    <span className="font-bold">ELSEVIER ({elsevierAll.length})</span>
+                  </label>
+                  <button onClick={() => setElsevierExpanded((v) => !v)} className="text-[11px] font-semibold text-accent-600 dark:text-accent-400 hover:underline shrink-0">
+                    {elsevierExpanded ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                {elsevierExpanded && (
+                  <div className="ml-2 pl-3 border-l border-amber-200 dark:border-amber-800/30 space-y-1">
+                    {elsevierPublishers.map((p) => (
+                      <CheckboxItem key={p} label={p} checked={isElsevierGroupChecked || selectedPublishers.includes(p)} onChange={() => handlePublisherCheck(p)} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {elsevierPublishers.length > 0 && otherPublishers.length > 0 && <div className="border-t border-neutral-100 dark:border-neutral-800 my-1" />}
+            {otherPublishers.length === 0 && elsevierPublishers.length === 0 && <p className="text-[11px] text-neutral-400">No matches</p>}
+            {otherPublishers.map((p) => (
               <CheckboxItem key={p} label={p} checked={selectedPublishers.includes(p)} onChange={() => handlePublisherCheck(p)} />
             ))}
           </div>
@@ -252,8 +303,16 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
             ? 'bg-accent-600 text-white border-accent-600 shadow-sm'
             : 'bg-white dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:border-slate-300'
         }`}>
-          <input type="checkbox" checked={filters.has_apc} onChange={(e) => onChange({ has_apc: e.target.checked })} className="rounded border-slate-300 text-accent-600 focus:ring-accent-500 w-3.5 h-3.5" />
-          Only APC
+          <input type="checkbox" checked={filters.has_apc} onChange={(e) => onChange({ has_apc: e.target.checked, without_apc: false })} className="rounded border-slate-300 text-accent-600 focus:ring-accent-500 w-3.5 h-3.5" />
+          Has APC
+        </label>
+        <label className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border cursor-pointer select-none transition-colors ${
+          filters.without_apc
+            ? 'bg-accent-600 text-white border-accent-600 shadow-sm'
+            : 'bg-white dark:bg-neutral-800/80 text-neutral-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:border-slate-300'
+        }`}>
+          <input type="checkbox" checked={filters.without_apc} onChange={(e) => onChange({ without_apc: e.target.checked, has_apc: false })} className="rounded border-slate-300 text-accent-600 focus:ring-accent-500 w-3.5 h-3.5" />
+          Without APC
         </label>
       </div>
 
@@ -287,7 +346,7 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
             ))}
 
             {selectedPublishers.map((p) => (
-              <Chip key={p} label={`Publisher: ${p}`} onRemove={() => handlePublisherCheck(p)} />
+              <Chip key={p} label={`Publisher: ${p === 'ELSEVIER_GROUP' ? 'ELSEVIER (All 29)' : p}`} onRemove={() => handlePublisherCheck(p)} />
             ))}
 
             {(filters.min_sjr > 0 || filters.max_sjr > 0) && (
@@ -304,7 +363,10 @@ export function FilterPanel({ filters, onChange, totalResults }: FilterPanelProp
               />
             )}
             {filters.has_apc && (
-              <Chip label="Only APC" onRemove={() => onChange({ has_apc: false })} />
+              <Chip label="Has APC" onRemove={() => onChange({ has_apc: false })} />
+            )}
+            {filters.without_apc && (
+              <Chip label="Without APC" onRemove={() => onChange({ without_apc: false })} />
             )}
           </motion.div>
         )}
